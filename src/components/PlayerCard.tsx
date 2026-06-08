@@ -97,6 +97,11 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
             <div className="min-w-0">
               <h3 className="text-lg font-black leading-tight text-slate-950">{player.jugador}</h3>
               <p className="mt-1 text-sm font-bold text-[#0057b8]">{player.posicion || "Sin posición"}</p>
+              {(player.jugador === "Sergio Ruiz" || player.jugador === "Saliou Mandiang") && (
+                <span className="mt-1 inline-block rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700">
+                  Vuelve tras cesión
+                </span>
+              )}
             </div>
             <div className="flex shrink-0 items-start gap-1.5">
               {player.posible_salida && (() => {
