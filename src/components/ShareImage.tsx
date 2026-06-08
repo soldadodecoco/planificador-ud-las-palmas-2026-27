@@ -16,6 +16,7 @@ type Props = {
 export function ShareImage({ players, decisions, priorities, pendingCount, onEdit, onReset }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   // Generate preview automatically on mount or when decisions/priorities change
   useEffect(() => {
