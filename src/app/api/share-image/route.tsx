@@ -65,6 +65,14 @@ export async function POST(request: Request) {
   const canteraAllowed = ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"];
   groups.cantera = groups.cantera.filter(p => (p.tipo_decision === "filial" || p.tipo_decision === "fin_contrato_filial") && canteraAllowed.includes(decisions[p.id]?.decisionValue as string));
 
+  const positionOrder: Record<string, number> = { "Portero": 1, "Defensa": 2, "Centrocampista": 3, "Atacante": 4 };
+  const sortPlayers = (players: Player[]) =>
+    [...players].sort((a, b) => (positionOrder[a.posicion] || 99) - (positionOrder[b.posicion] || 99));
+
+  (Object.keys(groups) as (keyof typeof groups)[]).forEach(key => {
+    groups[key] = sortPlayers(groups[key]);
+  });
+
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups);
   const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");

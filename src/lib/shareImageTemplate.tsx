@@ -80,11 +80,11 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
   );
 }
 
-function Block({ title, players, compact = false }: { title: string; players: ImagePlayer[]; compact?: boolean }) {
+function Block({ title, players, compact = false, color = "#ffe000" }: { title: string; players: ImagePlayer[]; compact?: boolean; color?: string }) {
   return (
-    <div style={{ ...panel, width: 970, minHeight: compact ? 220 : 300 }}>
+    <div style={{ ...panel, width: "100%", minHeight: compact ? 220 : 300 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{title}</div>
+        <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color }}>{title}</div>
         <div
           style={{
             display: "flex",
@@ -93,8 +93,8 @@ function Block({ title, players, compact = false }: { title: string; players: Im
             minWidth: 58,
             height: 48,
             borderRadius: 999,
-            background: "#ffe000",
-            color: "#07182f",
+            background: color,
+            color: color === "#ffe000" ? "#07182f" : "white",
             fontSize: 28,
             fontWeight: 900
           }}
@@ -216,36 +216,24 @@ export function ShareImageTemplate({ groups, priorities, label, background }: Pr
               Mi planificación 2026/27
             </div>
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 28,
-              background: "#ffe000",
-              color: "#07182f",
-              padding: "24px 36px",
-              fontSize: 48,
-              fontFamily: "Archivo",
-              lineHeight: 1,
-              fontWeight: 900,
-              maxWidth: 540,
-              textAlign: "center"
-            }}
-          >
-            {label}
+        </div>
+
+        <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 84 }}>
+          {/* Columna Izquierda */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
+            {groups.renovaciones.length > 0 && <Block title="Renovaciones" players={groups.renovaciones} />}
+            {groups.siguen.length > 0 && <Block title="Continúan" players={groups.siguen} compact />}
+            {groups.cantera.length > 0 && <Block title="Suben de la cantera" players={groups.cantera} />}
+            {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
+          </div>
+
+          {/* Columna Derecha */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
+            {groups.salidas.length > 0 && <Block title="Salidas" players={groups.salidas} color="#ef4444" />}
           </div>
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 84 }}>
-          {groups.salidas.length > 0 && <Block title="Salidas" players={groups.salidas} />}
-          {groups.renovaciones.length > 0 && <Block title="Renovaciones" players={groups.renovaciones} />}
-          {groups.siguen.length > 0 && <Block title="Con contrato (Siguen)" players={groups.siguen} compact />}
-          {groups.cantera.length > 0 && <Block title="Filial / Pretemporada" players={groups.cantera} />}
-          {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", marginTop: "auto" }}>
           <MarketBlock priorities={priorities} />
         </div>
       </div>
