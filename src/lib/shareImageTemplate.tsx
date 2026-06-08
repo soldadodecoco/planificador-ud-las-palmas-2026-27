@@ -238,11 +238,11 @@ export function ShareImageTemplate({ groups, priorities, label, background }: Pr
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 84 }}>
-          <Block title="Salidas" players={groups.salidas} />
-          <Block title="Renovaciones" players={groups.renovaciones} />
-          <Block title="Con contrato (Siguen)" players={groups.siguen} compact />
-          <Block title="Filial / Pretemporada" players={groups.cantera} />
-          <Block title="Dudas" players={groups.dudas} />
+          {groups.salidas.length > 0 && <Block title="Salidas" players={groups.salidas} />}
+          {groups.renovaciones.length > 0 && <Block title="Renovaciones" players={groups.renovaciones} />}
+          {groups.siguen.length > 0 && <Block title="Con contrato (Siguen)" players={groups.siguen} compact />}
+          {groups.cantera.length > 0 && <Block title="Filial / Pretemporada" players={groups.cantera} />}
+          {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>

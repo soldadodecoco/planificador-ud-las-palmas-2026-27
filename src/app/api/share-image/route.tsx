@@ -54,6 +54,17 @@ export async function POST(request: Request) {
   const decisions = body.decisions || {};
   const priorities = body.priorities || [];
   const groups = generateSummary(allPlayers, decisions);
+
+  // Filtros específicos para la imagen generada
+  (Object.keys(groups) as (keyof typeof groups)[]).forEach(key => {
+    if (key !== "cantera") {
+      groups[key] = groups[key].filter(p => p.tipo_decision !== "filial" && p.tipo_decision !== "fin_contrato_filial");
+    }
+  });
+
+  const canteraAllowed = ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"];
+  groups.cantera = groups.cantera.filter(p => (p.tipo_decision === "filial" || p.tipo_decision === "fin_contrato_filial") && canteraAllowed.includes(decisions[p.id]?.decisionValue as string));
+
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups);
   const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
