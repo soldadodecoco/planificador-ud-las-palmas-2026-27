@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;600;700;800&display=swap");
+@import "tailwindcss";
+
+:root {
+  --yellow: #ffe000;
+  --blue: #0057b8;
+  --navy: #07182f;
+  --ink: #08111f;
+  --paper: #f6f8fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Manrope, Aptos, "Segoe UI", Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+button,
+.sport-font {
+  font-family: Archivo, Bahnschrift, Aptos, "Segoe UI", sans-serif;
+}
+
+button,
+select {
+  cursor: pointer;
+  font: inherit;
+}
+
+.share-card {
+  width: 1920px;
+  min-height: 1920px;
+  color: white;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.section-transition {
+  animation: section-enter 260ms ease-out both;
+}
+
+.selected-decision::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 224, 0, 0.36), transparent);
+  content: "";
+  height: 100%;
+  left: -45%;
+  position: absolute;
+  top: 0;
+  transform: skewX(-18deg);
+  width: 35%;
+  animation: decision-sheen 520ms ease-out both;
+}
+
+.market-popover {
+  animation: market-popover-enter 180ms ease-out both;
+}
+
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes decision-sheen {
+  from {
+    left: -45%;
+  }
+  to {
+    left: 120%;
+  }
+}
+
+@keyframes market-popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
