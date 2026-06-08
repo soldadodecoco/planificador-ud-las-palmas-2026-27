@@ -70,8 +70,8 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ fontSize: 23, lineHeight: 1.05, fontWeight: 900 }}>{player.jugador}</div>
-        <div style={{ marginTop: 4, fontSize: 15, lineHeight: 1, fontWeight: 700, color: "#0057b8" }}>
+        <div style={{ display: "flex", fontSize: 23, lineHeight: 1.05, fontWeight: 900 }}>{player.jugador}</div>
+        <div style={{ display: "flex", marginTop: 4, fontSize: 15, lineHeight: 1, fontWeight: 700, color: "#0057b8" }}>
           {player.posicion}
         </div>
       </div>
@@ -83,7 +83,7 @@ function Block({ title, players, compact = false }: { title: string; players: Im
   return (
     <div style={{ ...panel, width: 970, minHeight: compact ? 220 : 300 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <div style={{ fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{title}</div>
+        <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{title}</div>
         <div
           style={{
             display: "flex",
@@ -143,7 +143,7 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
         minHeight: 245
       }}
     >
-      <div style={{ fontSize: 46, lineHeight: 1, fontWeight: 900 }}>Prioridades de mercado</div>
+      <div style={{ display: "flex", fontSize: 46, lineHeight: 1, fontWeight: 900 }}>Prioridades de mercado</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 24 }}>
         {active.length ? (
           active.map((priority) => (
@@ -163,7 +163,7 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
             </div>
           ))
         ) : (
-          <div style={{ fontSize: 28, fontWeight: 900 }}>Sin prioridades</div>
+          <div style={{ display: "flex", fontSize: 28, fontWeight: 900 }}>Sin prioridades</div>
         )}
       </div>
     </div>
@@ -189,8 +189,8 @@ export function ShareImageTemplate({ groups, priorities, label }: Props) {
     >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 40 }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 40, letterSpacing: 8, fontWeight: 900, color: "#07182f" }}>UD LAS PALMAS</div>
-          <div style={{ marginTop: 116, fontSize: 92, lineHeight: 0.96, fontWeight: 900, maxWidth: 1180 }}>
+          <div style={{ display: "flex", fontSize: 40, letterSpacing: 8, fontWeight: 900, color: "#07182f" }}>UD LAS PALMAS</div>
+          <div style={{ display: "flex", marginTop: 116, fontSize: 92, lineHeight: 0.96, fontWeight: 900, maxWidth: 1180 }}>
             Mi planificación 2026/27
           </div>
         </div>
@@ -223,7 +223,7 @@ export function ShareImageTemplate({ groups, priorities, label }: Props) {
         <Block title="Dudas" players={groups.dudas} />
       </div>
 
-      <div style={{ marginTop: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
         <MarketBlock priorities={priorities} />
       </div>
 
@@ -238,8 +238,8 @@ export function ShareImageTemplate({ groups, priorities, label }: Props) {
           color: "rgba(255,255,255,0.70)"
         }}
       >
-        <div>Planificador UD Las Palmas 2026/27</div>
-        <div>Imagen generada por aficionados</div>
+        <div style={{ display: "flex" }}>Planificador UD Las Palmas 2026/27</div>
+        <div style={{ display: "flex" }}>Imagen generada por aficionados</div>
       </div>
     </div>
   );
