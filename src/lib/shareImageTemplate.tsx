@@ -241,12 +241,12 @@ export function ShareImageTemplate({ groups, priorities, label, background, logo
             {groups.renovaciones.length > 0 && <Block title="Renovaciones" players={groups.renovaciones} />}
             {groups.siguen.length > 0 && <Block title="Continúan" players={groups.siguen} compact />}
             {groups.cantera.length > 0 && <Block title="Suben de la cantera" players={groups.cantera} />}
-            {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
           </div>
 
           {/* Columna Derecha */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
             {groups.salidas.length > 0 && <Block title="Salidas" players={groups.salidas} color="#ef4444" />}
+            {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
           </div>
         </div>
 
