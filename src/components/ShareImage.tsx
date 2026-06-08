@@ -2,7 +2,7 @@
 
 import { calculatePlanningLabel, copyableSummary, generateSummary } from "@/lib/summary";
 import { Decision, MarketPriority, Player, SectionId } from "@/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   players: Player[];
@@ -14,11 +14,49 @@ type Props = {
 };
 
 export function ShareImage({ players, decisions, priorities, pendingCount, onEdit, onReset }: Props) {
-  const [downloading, setDownloading] = useState(false);
-  const groups = useMemo(() => generateSummary(players, decisions), [players, decisions]);
-  const label = useMemo(() => calculatePlanningLabel(players, decisions, priorities), [players, decisions, priorities]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(true);
+
+  // Generate preview automatically on mount or when decisions/priorities change
+  useEffect(() => {
+    const fetchPreview = async () => {
+      setLoadingPreview(true);
+      try {
+        const response = await fetch("/api/share-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decisions, priorities })
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setPreviewUrl(url);
+        }
+      } catch (error) {
+        console.error("Error cargando vista previa:", error);
+      } finally {
+        setLoadingPreview(false);
+      }
+    };
+    fetchPreview();
+
+    // Cleanup blob URL to prevent memory leaks
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decisions, priorities]);
 
   async function downloadImage() {
+    if (previewUrl) {
+      const link = document.createElement("a");
+      link.download = "mi-planificacion-ud-las-palmas-2026-27.png";
+      link.href = previewUrl;
+      link.click();
+      return;
+    }
+
+    // Fallback if preview isn't ready
     setDownloading(true);
     try {
       const response = await fetch("/api/share-image", {
@@ -26,11 +64,7 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decisions, priorities })
       });
-
-      if (!response.ok) {
-        throw new Error("No se pudo generar la imagen.");
-      }
-
+      if (!response.ok) throw new Error("No se pudo generar la imagen.");
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -59,10 +93,10 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
         <button
           type="button"
           onClick={downloadImage}
-          disabled={downloading}
+          disabled={downloading || (!previewUrl && loadingPreview)}
           className="rounded-md bg-[#0057b8] px-4 py-3 font-black text-white disabled:opacity-50"
         >
-          {downloading ? "Generando..." : "Descargar imagen"}
+          {downloading || loadingPreview ? "Generando..." : "Descargar imagen"}
         </button>
         <button type="button" onClick={copySummary} className="rounded-md bg-slate-900 px-4 py-3 font-bold text-white">
           Copiar resumen
@@ -75,10 +109,23 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
         </button>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-bold text-slate-700">
-          La imagen se genera en servidor a 2160x2700 px con Satori y Resvg. Incluye fotos y todas las decisiones, sin recortes.
-        </p>
+      <div className="rounded-lg border border-slate-200 bg-slate-100 p-2 shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+        {loadingPreview ? (
+          <div className="flex flex-col items-center gap-4 text-slate-500">
+            <svg className="animate-spin h-10 w-10 text-[#0057b8]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="font-bold">Renderizando vista previa...</span>
+          </div>
+        ) : previewUrl ? (
+          <div className="w-full max-w-[500px] overflow-hidden rounded-md shadow-2xl ring-1 ring-slate-900/10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt="Vista previa de tu planificación" className="w-full h-auto block" />
+          </div>
+        ) : (
+          <p className="text-sm font-bold text-slate-500">Error al cargar la vista previa</p>
+        )}
       </div>
     </div>
   );
