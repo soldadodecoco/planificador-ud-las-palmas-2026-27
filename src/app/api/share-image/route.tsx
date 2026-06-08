@@ -78,11 +78,19 @@ export async function POST(request: Request) {
   const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
   const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
   const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
-  const [fontData, boldFontData, stadiumBuffer] = await Promise.all([fs.readFile(fontPath), fs.readFile(boldFontPath), fs.readFile(stadiumPath).catch(() => null)]);
+  const logoPath = path.join(process.cwd(), "public", "logo.png");
+  
+  const [fontData, boldFontData, stadiumBuffer, logoBuffer] = await Promise.all([
+    fs.readFile(fontPath), 
+    fs.readFile(boldFontPath), 
+    fs.readFile(stadiumPath).catch(() => null),
+    fs.readFile(logoPath).catch(() => null)
+  ]);
 
   const stadiumBase64 = stadiumBuffer ? `data:image/jpeg;base64,${stadiumBuffer.toString("base64")}` : undefined;
+  const logoBase64 = logoBuffer ? `data:image/png;base64,${logoBuffer.toString("base64")}` : undefined;
 
-  const svg = await satori(<ShareImageTemplate groups={groupsWithImages} priorities={priorities} label={label} background={stadiumBase64} />, {
+  const svg = await satori(<ShareImageTemplate groups={groupsWithImages} priorities={priorities} label={label} background={stadiumBase64} logo={logoBase64} />, {
     width: 2160,
     height: 2700,
     fonts: [

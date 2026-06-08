@@ -9,6 +9,7 @@ type Props = {
   priorities: MarketPriority[];
   label: string;
   background?: string;
+  logo?: string;
 };
 
 const W = 2160;
@@ -137,41 +138,49 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        background: "#ffe000",
-        color: "#07182f",
-        borderRadius: 30,
-        padding: 30,
-        minHeight: 245
+        background: "rgba(0, 87, 184, 0.45)",
+        border: "3px solid rgba(255, 224, 0, 0.5)",
+        boxShadow: "0 0 40px rgba(0,87,184,0.4), inset 0 0 30px rgba(255,224,0,0.1)",
+        color: "white",
+        borderRadius: 40,
+        padding: 45,
+        marginTop: "auto"
       }}
     >
-      <div style={{ display: "flex", fontSize: 46, lineHeight: 1, fontWeight: 900 }}>Prioridades de mercado</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 24 }}>
+      <div style={{ display: "flex", fontSize: 52, lineHeight: 1, fontWeight: 900, color: "#ffe000", letterSpacing: 2 }}>
+        OBJETIVOS DE MERCADO
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 35 }}>
         {active.length ? (
           active.map((priority) => (
             <div
               key={priority.positionId}
               style={{
                 display: "flex",
-                borderRadius: 18,
-                background: "#07182f",
+                alignItems: "center",
+                borderRadius: 22,
+                background: priority.priority === "high" ? "#ef4444" : priority.priority === "medium" ? "#f97316" : "rgba(255,255,255,0.1)",
                 color: "white",
-                padding: "14px 18px",
-                fontSize: 27,
-                fontWeight: 900
+                padding: "18px 28px",
+                fontSize: 32,
+                fontWeight: 900,
+                border: priority.priority === "low" ? "2px solid rgba(255,255,255,0.3)" : "none",
+                boxShadow: priority.priority === "high" ? "0 10px 25px rgba(239,68,68,0.4)" : "none"
               }}
             >
-              {priority.positionLabel} · {priorityLabels[priority.priority]}
+              <span style={{ color: "rgba(255,255,255,0.8)", marginRight: 12 }}>{priority.positionLabel}</span> 
+              <span>{priorityLabels[priority.priority].toUpperCase()}</span>
             </div>
           ))
         ) : (
-          <div style={{ display: "flex", fontSize: 28, fontWeight: 900 }}>Sin prioridades</div>
+          <div style={{ display: "flex", fontSize: 32, fontWeight: 900, opacity: 0.6 }}>Plantilla cerrada</div>
         )}
       </div>
     </div>
   );
 }
 
-export function ShareImageTemplate({ groups, priorities, label, background }: Props) {
+export function ShareImageTemplate({ groups, priorities, label, background, logo }: Props) {
   return (
     <div style={{ display: "flex", width: W, height: H }}>
       <div
@@ -209,12 +218,18 @@ export function ShareImageTemplate({ groups, priorities, label, background }: Pr
           fontFamily: "Manrope"
         }}
       >
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 40 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontFamily: "Archivo", fontSize: 40, letterSpacing: 8, fontWeight: 900, color: "#ffe000" }}>UD LAS PALMAS</div>
-            <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 116, fontSize: 92, lineHeight: 0.96, fontWeight: 900, maxWidth: 1180 }}>
-              Mi planificación 2026/27
+        {/* Header Redesign */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", marginBottom: 30 }}>
+          {logo && (
+            <div style={{ display: "flex", borderRadius: 160, boxShadow: "0 0 80px rgba(255,224,0,0.25)", background: "rgba(255,255,255,0.05)", padding: 25 }}>
+              <img src={logo} width={250} height={250} style={{ objectFit: "contain" }} />
             </div>
+          )}
+          <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 45, fontSize: 100, lineHeight: 1, fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: 6 }}>
+            Planificación Deportiva
+          </div>
+          <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 25, fontSize: 50, lineHeight: 1, fontWeight: 900, color: "#ffe000", letterSpacing: 16 }}>
+            UD LAS PALMAS 2026/27
           </div>
         </div>
 
