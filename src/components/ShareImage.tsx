@@ -18,6 +18,9 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [downloading, setDownloading] = useState(false);
 
+  const groups = useMemo(() => generateSummary(players, decisions), [players, decisions]);
+  const label = useMemo(() => calculatePlanningLabel(players, decisions, priorities), [players, decisions, priorities]);
+
   // Generate preview automatically on mount or when decisions/priorities change
   useEffect(() => {
     const fetchPreview = async () => {
