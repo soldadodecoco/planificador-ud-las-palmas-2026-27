@@ -56,22 +56,25 @@ export async function POST(request: Request) {
   const groups = generateSummary(allPlayers, decisions);
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups);
-  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Arial.ttf");
-  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "AgencyBold.ttf");
-  const [fontData, boldFontData] = await Promise.all([fs.readFile(fontPath), fs.readFile(boldFontPath)]);
+  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
+  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
+  const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
+  const [fontData, boldFontData, stadiumBuffer] = await Promise.all([fs.readFile(fontPath), fs.readFile(boldFontPath), fs.readFile(stadiumPath).catch(() => null)]);
 
-  const svg = await satori(<ShareImageTemplate groups={groupsWithImages} priorities={priorities} label={label} />, {
+  const stadiumBase64 = stadiumBuffer ? `data:image/jpeg;base64,${stadiumBuffer.toString("base64")}` : undefined;
+
+  const svg = await satori(<ShareImageTemplate groups={groupsWithImages} priorities={priorities} label={label} background={stadiumBase64} />, {
     width: 2160,
     height: 2700,
     fonts: [
       {
-        name: "Arial",
+        name: "Manrope",
         data: fontData,
         weight: 400,
         style: "normal"
       },
       {
-        name: "Arial",
+        name: "Archivo",
         data: boldFontData,
         weight: 900,
         style: "normal"

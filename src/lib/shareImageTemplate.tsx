@@ -8,6 +8,7 @@ type Props = {
   groups: ImageGroups;
   priorities: MarketPriority[];
   label: string;
+  background?: string;
 };
 
 const W = 2160;
@@ -170,76 +171,83 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
   );
 }
 
-export function ShareImageTemplate({ groups, priorities, label }: Props) {
-  const cedidos = [...groups.cesiones, ...groups.compras];
-
+export function ShareImageTemplate({ groups, priorities, label, background }: Props) {
   return (
-    <div
-      style={{
-        width: W,
-        height: H,
-        display: "flex",
-        flexDirection: "column",
-        padding: 86,
-        color: "white",
-        background:
-          "linear-gradient(135deg, #ffe000 0 13%, transparent 13%), linear-gradient(160deg, #06152b 0%, #082b57 56%, #0057b8 100%)",
-        fontFamily: "Arial"
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 40 }}>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 40, letterSpacing: 8, fontWeight: 900, color: "#07182f" }}>UD LAS PALMAS</div>
-          <div style={{ display: "flex", marginTop: 116, fontSize: 92, lineHeight: 0.96, fontWeight: 900, maxWidth: 1180 }}>
-            Mi planificación 2026/27
-          </div>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 28,
-            background: "#ffe000",
-            color: "#07182f",
-            padding: "24px 36px",
-            fontSize: 48,
-            lineHeight: 1,
-            fontWeight: 900,
-            maxWidth: 540,
-            textAlign: "center"
-          }}
-        >
-          {label}
-        </div>
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 84 }}>
-        <Block title="Renovaciones" players={groups.renovaciones} />
-        <Block title="Salidas" players={groups.salidas} />
-        <Block title="Cedidos / compras" players={cedidos} compact />
-        <Block title="Siguen" players={groups.siguen} compact />
-        <Block title="Las Palmas Atlético" players={groups.cantera} />
-        <Block title="Dudas" players={groups.dudas} />
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
-        <MarketBlock priorities={priorities} />
+    <div style={{ display: "flex", width: W, height: H }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: W,
+          height: H,
+          display: "flex",
+          backgroundColor: "#07182f"
+        }}
+      >
+        {background && (
+          <img
+            src={background}
+            width={W}
+            height={H}
+            style={{ position: "absolute", top: 0, left: 0, objectFit: "cover", opacity: 0.25 }}
+          />
+        )}
       </div>
 
       <div
         style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: W,
+          height: H,
           display: "flex",
-          justifyContent: "space-between",
-          marginTop: "auto",
-          paddingTop: 40,
-          fontSize: 28,
-          fontWeight: 900,
-          color: "rgba(255,255,255,0.70)"
+          flexDirection: "column",
+          padding: 86,
+          color: "white",
+          fontFamily: "Manrope"
         }}
       >
-        <div style={{ display: "flex" }}>Planificador UD Las Palmas 2026/27</div>
-        <div style={{ display: "flex" }}>Imagen generada por aficionados</div>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 40 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontFamily: "Archivo", fontSize: 40, letterSpacing: 8, fontWeight: 900, color: "#ffe000" }}>UD LAS PALMAS</div>
+            <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 116, fontSize: 92, lineHeight: 0.96, fontWeight: 900, maxWidth: 1180 }}>
+              Mi planificación 2026/27
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 28,
+              background: "#ffe000",
+              color: "#07182f",
+              padding: "24px 36px",
+              fontSize: 48,
+              fontFamily: "Archivo",
+              lineHeight: 1,
+              fontWeight: 900,
+              maxWidth: 540,
+              textAlign: "center"
+            }}
+          >
+            {label}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginTop: 84 }}>
+          <Block title="Salidas" players={groups.salidas} />
+          <Block title="Renovaciones" players={groups.renovaciones} />
+          <Block title="Con contrato (Siguen)" players={groups.siguen} compact />
+          <Block title="Filial / Pretemporada" players={groups.cantera} />
+          <Block title="Dudas" players={groups.dudas} />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 24 }}>
+          <MarketBlock priorities={priorities} />
+        </div>
       </div>
     </div>
   );
