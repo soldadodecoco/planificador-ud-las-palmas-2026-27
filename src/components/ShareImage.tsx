@@ -81,19 +81,11 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
     }
   }
 
-  async function copySummary() {
-    await navigator.clipboard.writeText(copyableSummary(groups, priorities, label));
-  }
+
 
   return (
     <div className="space-y-5">
-      {pendingCount > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
-          Quedan {pendingCount} jugadores sin decidir. Puedes generar la imagen igualmente.
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         <button
           type="button"
           onClick={downloadImage}
@@ -101,9 +93,6 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
           className="rounded-md bg-[#0057b8] px-4 py-3 font-black text-white disabled:opacity-50"
         >
           {downloading || loadingPreview ? "Generando..." : "Descargar imagen"}
-        </button>
-        <button type="button" onClick={copySummary} className="rounded-md bg-slate-900 px-4 py-3 font-bold text-white">
-          Copiar resumen
         </button>
         <button type="button" onClick={() => onEdit("calientes")} className="rounded-md bg-white px-4 py-3 font-bold text-slate-900 ring-1 ring-slate-200">
           Editar planificación

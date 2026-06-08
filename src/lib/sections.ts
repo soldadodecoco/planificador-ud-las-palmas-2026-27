@@ -10,8 +10,8 @@ export const sections: { id: SectionId; label: string; shortLabel: string }[] = 
   { id: "cedidos-fuera", label: "Vuelven tras cesión", shortLabel: "Vuelven" },
   { id: "cantera", label: "Las Palmas Atlético", shortLabel: "Atlético" },
   { id: "mercado", label: "Prioridades de mercado", shortLabel: "Mercado" },
-  { id: "resumen", label: "Resumen editable", shortLabel: "Resumen" },
-  { id: "imagen", label: "Imagen final", shortLabel: "Imagen" }
+  { id: "resumen", label: "Resumen", shortLabel: "Resumen" },
+  { id: "imagen", label: "Mi UD Las Palmas 2026/27", shortLabel: "Imagen" }
 ];
 
 function isFilial(player: Player) {

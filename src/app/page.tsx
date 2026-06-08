@@ -20,8 +20,8 @@ const sectionTitles: Partial<Record<SectionId, string>> = {
   "cedidos-fuera": "Vuelven tras cesión",
   cantera: "Las Palmas Atlético",
   mercado: "Prioridades de mercado por posición",
-  resumen: "Resumen editable",
-  imagen: "Imagen final descargable"
+  resumen: "Resumen",
+  imagen: "Mi UD Las Palmas 2026/27"
 };
 
 export default function Home() {
@@ -117,9 +117,11 @@ export default function Home() {
         <section key={activeSection} className="section-transition mx-auto max-w-7xl px-4 py-8">
           <div className="mb-6">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-[#0057b8]">
-                {activeIndex + 1} de {sections.length}
-              </p>
+              {activeIndex > 0 && activeIndex <= 7 && (
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-[#0057b8]">
+                  {activeIndex} de 7
+                </p>
+              )}
               {activeSection !== "entrenador" && (
                 <>
                   <h2 className="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">{sectionTitles[activeSection]}</h2>
@@ -141,7 +143,11 @@ export default function Home() {
                   player={player}
                   decision={decisions[player.id]}
                   decisionTypeOverride={
-                    activeSection === "calientes" && player.tipo_decision === "plantilla_normal" ? "renovacion" : undefined
+                    activeSection === "calientes" && player.tipo_decision === "plantilla_normal"
+                      ? "renovacion"
+                      : activeSection === "cedidos-fuera" && player.tipo_decision === "posible_venta"
+                        ? "cedido_fuera"
+                        : undefined
                   }
                   onDecision={setDecision}
                   onClearDecision={clearDecision}

@@ -132,49 +132,48 @@ function Block({ title, players, compact = false, color = "#ffe000" }: { title: 
 
 function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
   const active = priorities.filter((priority) => priority.priority !== "none");
+  if (active.length === 0) return null;
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        background: "rgba(0, 87, 184, 0.45)",
-        border: "3px solid rgba(255, 224, 0, 0.5)",
-        boxShadow: "0 0 40px rgba(0,87,184,0.4), inset 0 0 30px rgba(255,224,0,0.1)",
-        color: "white",
-        borderRadius: 40,
-        padding: 45,
-        marginTop: "auto"
-      }}
-    >
-      <div style={{ display: "flex", fontSize: 52, lineHeight: 1, fontWeight: 900, color: "#ffe000", letterSpacing: 2 }}>
-        OBJETIVOS DE MERCADO
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 20, marginTop: 35 }}>
-        {active.length ? (
-          active.map((priority) => (
+  const high = active.filter((p) => p.priority === "high");
+  const medium = active.filter((p) => p.priority === "medium");
+  const low = active.filter((p) => p.priority === "low");
+
+  const PriorityList = ({ title, items, color }: { title: string; items: MarketPriority[]; color: string }) => {
+    if (items.length === 0) return null;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", fontSize: 28, fontWeight: 900, color }}>{title}</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          {items.map((p) => (
             <div
-              key={priority.positionId}
+              key={p.positionId}
               style={{
                 display: "flex",
-                alignItems: "center",
-                borderRadius: 22,
-                background: priority.priority === "high" ? "#ef4444" : priority.priority === "medium" ? "#f97316" : "rgba(255,255,255,0.1)",
-                color: "white",
-                padding: "18px 28px",
-                fontSize: 32,
-                fontWeight: 900,
-                border: priority.priority === "low" ? "2px solid rgba(255,255,255,0.3)" : "none",
-                boxShadow: priority.priority === "high" ? "0 10px 25px rgba(239,68,68,0.4)" : "none"
+                background: "rgba(255,255,255,0.94)",
+                color: "#07182f",
+                borderRadius: 14,
+                padding: "8px 16px",
+                fontSize: 24,
+                fontWeight: 800
               }}
             >
-              <span style={{ color: "rgba(255,255,255,0.8)", marginRight: 12 }}>{priority.positionLabel}</span> 
-              <span>{priorityLabels[priority.priority].toUpperCase()}</span>
+              {p.positionLabel}
             </div>
-          ))
-        ) : (
-          <div style={{ display: "flex", fontSize: 32, fontWeight: 900, opacity: 0.6 }}>Plantilla cerrada</div>
-        )}
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ ...panel, width: "100%", marginTop: "auto", minHeight: "auto", padding: 35 }}>
+      <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000", marginBottom: 24 }}>
+        Objetivos de mercado
+      </div>
+      <div style={{ display: "flex", gap: 40 }}>
+        <PriorityList title="PRIORIDAD ALTA" items={high} color="#ef4444" />
+        <PriorityList title="PRIORIDAD MEDIA" items={medium} color="#f97316" />
+        <PriorityList title="PRIORIDAD BAJA" items={low} color="#eab308" />
       </div>
     </div>
   );
@@ -220,16 +219,19 @@ export function ShareImageTemplate({ groups, priorities, label, background, logo
       >
         {/* Header Redesign */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", marginBottom: 30 }}>
-          {logo && (
-            <div style={{ display: "flex", borderRadius: 160, boxShadow: "0 0 80px rgba(255,224,0,0.25)", background: "rgba(255,255,255,0.05)", padding: 25 }}>
-              <img src={logo} width={250} height={250} style={{ objectFit: "contain" }} />
-            </div>
-          )}
-          <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 45, fontSize: 100, lineHeight: 1, fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: 6 }}>
-            Planificación Deportiva
-          </div>
-          <div style={{ display: "flex", fontFamily: "Archivo", marginTop: 25, fontSize: 50, lineHeight: 1, fontWeight: 900, color: "#ffe000", letterSpacing: 16 }}>
+          <div style={{ display: "flex", fontFamily: "Manrope", fontSize: 30, letterSpacing: 10, fontWeight: 400, color: "white", marginBottom: 35 }}>
             UD LAS PALMAS 2026/27
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 35 }}>
+            {logo && <img src={logo} width={180} height={180} style={{ objectFit: "contain" }} />}
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: 180 }}>
+              <div style={{ display: "flex", fontFamily: "Archivo", fontSize: 90, lineHeight: 1, fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: 2 }}>
+                PLANIFICACIÓN
+              </div>
+              <div style={{ display: "flex", fontFamily: "Archivo", fontSize: 90, lineHeight: 1, fontWeight: 900, color: "#ffe000", textTransform: "uppercase", letterSpacing: 2 }}>
+                DEPORTIVA
+              </div>
+            </div>
           </div>
         </div>
 
