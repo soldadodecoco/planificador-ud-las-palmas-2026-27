@@ -140,6 +140,9 @@ export default function Home() {
                   key={player.id}
                   player={player}
                   decision={decisions[player.id]}
+                  decisionTypeOverride={
+                    activeSection === "calientes" && player.tipo_decision === "plantilla_normal" ? "renovacion" : undefined
+                  }
                   onDecision={setDecision}
                   onClearDecision={clearDecision}
                 />

@@ -30,6 +30,7 @@ export function getPlayersForSection(players: Player[], sectionId: SectionId) {
         player.orden !== 0 &&
         (player.tipo_decision === "renovacion_salida" ||
           player.tipo_decision === "renovacion" ||
+          (player.tipo_decision === "plantilla_normal" && player.fin_de_contrato === "2026" && player.tipo === "") ||
           (player.tipo_decision === "posible_venta" && player.orden <= 2))
       );
     }
@@ -40,7 +41,7 @@ export function getPlayersForSection(players: Player[], sectionId: SectionId) {
 
     if (sectionId === "plantilla") {
       return (
-        player.tipo_decision === "plantilla_normal" ||
+        (player.tipo_decision === "plantilla_normal" && !(player.fin_de_contrato === "2026" && player.tipo === "")) ||
         (player.tipo_decision === "posible_venta" && player.orden > 2 && player.tipo !== "Cedido fuera")
       );
     }

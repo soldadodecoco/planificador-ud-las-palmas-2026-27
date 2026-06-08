@@ -1,11 +1,12 @@
 "use client";
 
 import { DecisionButtons } from "@/components/DecisionButtons";
-import { Decision, DecisionValue, Player } from "@/types";
+import { Decision, DecisionType, DecisionValue, Player } from "@/types";
 
 type Props = {
   player: Player;
   decision?: Decision;
+  decisionTypeOverride?: DecisionType;
   onDecision: (player: Player, value: DecisionValue, label: string) => void;
   onClearDecision: (player: Player) => void;
 };
@@ -74,7 +75,7 @@ const salidaStrength: Record<
   }
 };
 
-export function PlayerCard({ player, decision, onDecision, onClearDecision }: Props) {
+export function PlayerCard({ player, decision, decisionTypeOverride, onDecision, onClearDecision }: Props) {
   return (
     <article
       className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition"
@@ -133,7 +134,7 @@ export function PlayerCard({ player, decision, onDecision, onClearDecision }: Pr
 
       <div className="border-t border-slate-100 p-3">
         <DecisionButtons
-          type={player.tipo_decision}
+          type={decisionTypeOverride || player.tipo_decision}
           selected={decision}
           onSelect={(value, label) => onDecision(player, value, label)}
           onClear={() => onClearDecision(player)}
