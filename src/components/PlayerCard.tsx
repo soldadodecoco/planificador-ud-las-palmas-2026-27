@@ -11,7 +11,7 @@ type Props = {
   onClearDecision: (player: Player) => void;
 };
 
-const salidaStrength: Record<
+export const salidaStrength: Record<
   string,
   {
     badge: string;
