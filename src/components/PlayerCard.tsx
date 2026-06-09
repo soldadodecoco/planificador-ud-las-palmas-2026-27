@@ -77,6 +77,9 @@ export const salidaStrength: Record<
 };
 
 export function PlayerCard({ player, decision, decisionTypeOverride, onDecision, onClearDecision }: Props) {
+  const isFilial = player.filial.trim().toLowerCase().startsWith("s");
+  const returnsFromLoan = isFilial && player.tipo === "Cedido fuera";
+
   return (
     <article
       className="rounded-lg border border-slate-200 bg-white shadow-sm transition"
@@ -98,7 +101,7 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
             <div className="min-w-0">
               <h3 className="text-lg font-black leading-tight text-slate-950">{player.jugador}</h3>
               <p className="mt-1 text-sm font-bold text-[#0057b8]">{player.posicion || "Sin posición"}</p>
-              {(player.jugador === "Sergio Ruiz" || player.jugador === "Saliou Mandiang") && (
+              {returnsFromLoan && (
                 <span className="mt-1 inline-block rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-700">
                   Vuelve tras cesión
                 </span>
@@ -139,8 +142,8 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
 
           <div className="mt-3 space-y-2 text-sm text-slate-700">
             {player.fin_de_contrato && player.fin_de_contrato !== "?" && <p>Fin de contrato: {player.fin_de_contrato}</p>}
-            {player.filial === "Sí" && player.minutos_jugados > 0 && <p>Minutos: {player.minutos_jugados}</p>}
-            {player.filial === "Sí" && player.goles > 0 && <p>Goles: {player.goles}</p>}
+            {isFilial && player.minutos_jugados > 0 && <p>Minutos: {player.minutos_jugados}</p>}
+            {isFilial && player.goles > 0 && <p>Goles: {player.goles}</p>}
           </div>
         </div>
       </div>

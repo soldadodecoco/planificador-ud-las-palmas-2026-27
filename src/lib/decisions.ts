@@ -37,7 +37,7 @@ export const decisionButtons: Record<DecisionType, DecisionButton[]> = {
   cedido_fuera: [
     { value: "recuperar", label: "Recuperar" },
     { value: "ceder_otra_vez", label: "Ceder otra vez" },
-    { value: "buscar_salida", label: "Buscar salida" },
+    { value: "salida", label: "Salida" },
     { value: "duda", label: "Duda" }
   ],
   filial: [

@@ -3,6 +3,7 @@ import { ShareImageTemplate } from "@/lib/shareImageTemplate";
 import { calculatePlanningLabel, generateSummary } from "@/lib/summary";
 import { Decision, MarketPriority, Player, SummaryGroups } from "@/types";
 import { Resvg } from "@resvg/resvg-js";
+import { createElement } from "react";
 import fs from "node:fs/promises";
 import path from "node:path";
 import satori from "satori";
@@ -54,54 +55,24 @@ export async function POST(request: Request) {
   const decisions = body.decisions || {};
   const priorities = body.priorities || [];
   const groups = generateSummary(allPlayers, decisions);
-
-  // Filtros específicos para la imagen generada
-  (Object.keys(groups) as (keyof typeof groups)[]).forEach(key => {
-    if (key !== "cantera") {
-      groups[key] = groups[key].filter(p => p.tipo_decision !== "filial" && p.tipo_decision !== "fin_contrato_filial");
-    }
-  });
-
-  const canteraAllowed = ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"];
-  groups.cantera = groups.cantera.filter(p => (p.tipo_decision === "filial" || p.tipo_decision === "fin_contrato_filial") && canteraAllowed.includes(decisions[p.id]?.decisionValue as string));
-
-  const positionOrder: Record<string, number> = { "Portero": 1, "Defensa": 2, "Centrocampista": 3, "Atacante": 4 };
-  const sortPlayers = (players: Player[]) =>
-    [...players].sort((a, b) => (positionOrder[a.posicion] || 99) - (positionOrder[b.posicion] || 99));
-
-  (Object.keys(groups) as (keyof typeof groups)[]).forEach(key => {
-    groups[key] = sortPlayers(groups[key]);
-  });
-
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups);
-  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
-  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
-  const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
-  const logoPath = path.join(process.cwd(), "public", "logo.png");
-  
-  const [fontData, boldFontData, stadiumBuffer, logoBuffer] = await Promise.all([
-    fs.readFile(fontPath), 
-    fs.readFile(boldFontPath), 
-    fs.readFile(stadiumPath).catch(() => null),
-    fs.readFile(logoPath).catch(() => null)
-  ]);
+  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Arial.ttf");
+  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "AgencyBold.ttf");
+  const [fontData, boldFontData] = await Promise.all([fs.readFile(fontPath), fs.readFile(boldFontPath)]);
 
-  const stadiumBase64 = stadiumBuffer ? `data:image/jpeg;base64,${stadiumBuffer.toString("base64")}` : undefined;
-  const logoBase64 = logoBuffer ? `data:image/png;base64,${logoBuffer.toString("base64")}` : undefined;
-
-  const svg = await satori(<ShareImageTemplate groups={groupsWithImages} priorities={priorities} label={label} background={stadiumBase64} logo={logoBase64} />, {
+  const svg = await satori(createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label }), {
     width: 2160,
     height: 2700,
     fonts: [
       {
-        name: "Manrope",
+        name: "Arial",
         data: fontData,
         weight: 400,
         style: "normal"
       },
       {
-        name: "Archivo",
+        name: "Arial",
         data: boldFontData,
         weight: 900,
         style: "normal"
