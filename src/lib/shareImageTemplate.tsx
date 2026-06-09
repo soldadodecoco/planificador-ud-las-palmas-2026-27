@@ -180,6 +180,23 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
 }
 
 export function ShareImageTemplate({ groups, priorities, label, background, logo }: Props) {
+  let entrenador: ImagePlayer | null = null;
+  let entrenadorStatus = "";
+  const filteredGroups = {} as ImageGroups;
+
+  (Object.keys(groups) as (keyof ImageGroups)[]).forEach((key) => {
+    filteredGroups[key] = groups[key].filter((p) => {
+      if (p.posicion === "Entrenador") {
+        entrenador = p;
+        if (key === "salidas" || key === "escucharOfertas") entrenadorStatus = "Se marcha";
+        else if (key === "siguen" || key === "renovaciones") entrenadorStatus = "Se queda";
+        else entrenadorStatus = "Duda";
+        return false;
+      }
+      return true;
+    });
+  });
+
   return (
     <div style={{ display: "flex", width: W, height: H }}>
       <div
@@ -235,18 +252,36 @@ export function ShareImageTemplate({ groups, priorities, label, background, logo
           </div>
         </div>
 
-        <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 84 }}>
+        {entrenador && (
+          <div style={{ display: "flex", width: "100%", justifyContent: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 32px 12px 12px", background: "rgba(255,255,255,0.95)", borderRadius: 100, border: "4px solid rgba(255,255,255,0.15)", backgroundClip: "padding-box" }}>
+              <div style={{ display: "flex", width: 80, height: 80, borderRadius: 999, overflow: "hidden", background: "#07182f", color: "#ffe000", fontSize: 28, fontWeight: 900, alignItems: "center", justifyContent: "center" }}>
+                {entrenador.imageSrc ? <img src={entrenador.imageSrc} width={80} height={80} style={{ objectFit: "cover" }} /> : initials(entrenador.jugador)}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                 <div style={{ display: "flex", fontSize: 20, fontWeight: 900, color: "#0057b8", marginBottom: 4 }}>ENTRENADOR</div>
+                 <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: "#07182f", lineHeight: 1 }}>{entrenador.jugador}</div>
+              </div>
+              <div style={{ width: 3, height: 60, background: "#e2e8f0", marginLeft: 16, marginRight: 16 }} />
+              <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: entrenadorStatus === "Se marcha" ? "#ef4444" : entrenadorStatus === "Se queda" ? "#22c55e" : "#f59e0b" }}>
+                 {entrenadorStatus.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 40 }}>
           {/* Columna Izquierda */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
-            {groups.renovaciones.length > 0 && <Block title="Renovaciones" players={groups.renovaciones} />}
-            {groups.siguen.length > 0 && <Block title="Continúan" players={groups.siguen} compact />}
-            {groups.cantera.length > 0 && <Block title="Suben de la cantera" players={groups.cantera} />}
+            {filteredGroups.renovaciones.length > 0 && <Block title="Renovaciones" players={filteredGroups.renovaciones} />}
+            {filteredGroups.siguen.length > 0 && <Block title="Continúan" players={filteredGroups.siguen} compact />}
+            {filteredGroups.cantera.length > 0 && <Block title="Suben de la cantera" players={filteredGroups.cantera} />}
           </div>
 
           {/* Columna Derecha */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
-            {groups.salidas.length > 0 && <Block title="Salidas" players={groups.salidas} color="#ef4444" />}
-            {groups.dudas.length > 0 && <Block title="Dudas" players={groups.dudas} />}
+            {filteredGroups.salidas.length > 0 && <Block title="Salidas" players={filteredGroups.salidas} color="#ef4444" />}
+            {filteredGroups.dudas.length > 0 && <Block title="Dudas" players={filteredGroups.dudas} />}
           </div>
         </div>
 
