@@ -1,6 +1,7 @@
 "use client";
 
 import { DecisionButtons } from "@/components/DecisionButtons";
+import { LegendToast } from "@/components/LegendToast";
 import { Decision, DecisionType, DecisionValue, Player } from "@/types";
 
 type Props = {
@@ -78,7 +79,7 @@ export const salidaStrength: Record<
 export function PlayerCard({ player, decision, decisionTypeOverride, onDecision, onClearDecision }: Props) {
   return (
     <article
-      className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition"
+      className="rounded-lg border border-slate-200 bg-white shadow-sm transition"
     >
       <div className="grid grid-cols-[92px_1fr] gap-3 p-3 sm:grid-cols-[112px_1fr]">
         <div className="h-28 overflow-hidden rounded-md bg-slate-100 sm:h-32">
@@ -106,7 +107,7 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
             <div className="flex shrink-0 items-start gap-1.5">
               {player.posible_salida && (() => {
                 const config = salidaStrength[player.posible_salida] ?? {
-                  badge: "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:scale-110 shadow-xs",
+                  badge: "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 shadow-xs",
                   title: `Probabilidad de salida: ${player.posible_salida}`,
                   icon: (
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -117,12 +118,19 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
                   )
                 };
                 return (
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 cursor-help ${config.badge}`}
-                    title={config.title}
-                    aria-label={config.title}
-                  >
-                    {config.icon}
+                  <div className="flex items-center gap-1.5">
+                    {player.posicion === "Entrenador" && (
+                      <div className="relative z-40">
+                        <LegendToast />
+                      </div>
+                    )}
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 cursor-help ${config.badge}`}
+                      title={config.title}
+                      aria-label={config.title}
+                    >
+                      {config.icon}
+                    </div>
                   </div>
                 );
               })()}

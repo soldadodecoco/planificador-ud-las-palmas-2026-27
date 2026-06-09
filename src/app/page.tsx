@@ -138,8 +138,6 @@ export default function Home() {
             </div>
           </div>
 
-          {activeSection === "entrenador" && <LegendToast />}
-
           {isDecisionSection(activeSection) && (
             <div className="grid justify-center gap-4 sm:grid-cols-[minmax(0,420px)] lg:grid-cols-[repeat(2,minmax(0,420px))] xl:grid-cols-[repeat(3,minmax(0,420px))]">
               {currentPlayers.map((player) => (

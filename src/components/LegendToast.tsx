@@ -28,58 +28,55 @@ export function LegendToast() {
   }, [isOpen, hasOpened]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {/* Toast Panel */}
-      <div
-        className={`mb-4 w-80 origin-bottom-right rounded-xl border border-slate-200 bg-white p-4 shadow-2xl transition-all duration-500 ease-in-out ${
-          isOpen ? "scale-100 opacity-100 pointer-events-auto translate-y-0" : "scale-50 opacity-0 pointer-events-none translate-y-8"
-        }`}
-      >
-        <div className="mb-2 flex items-center justify-between">
-          <h4 className="text-sm font-black text-slate-950">Probabilidad de salida</h4>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-            aria-label="Cerrar"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <p className="mb-4 text-xs font-medium text-slate-500">
-          Estos iconos, basados en rumores de prensa y situación contractual, indican la probabilidad de que un jugador abandone el club:
-        </p>
-        <div className="space-y-2">
-          {Object.entries(salidaStrength).map(([key, config]) => (
-            <div key={key} className="flex items-center gap-3">
-              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${config.badge}`}>
-                <div className="scale-75">{config.icon}</div>
-              </div>
-              <span className="text-xs font-bold text-slate-700">{config.title}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Floating Button Icon */}
+    <div className="relative flex items-center">
+      {/* Tiny Info Icon */}
       <button
         onClick={() => {
           setIsOpen(!isOpen);
           setHasOpened(false); // Stop auto-close if triggered manually
         }}
-        className={`flex h-12 w-12 items-center justify-center rounded-full bg-[#07182f] text-[#ffe000] shadow-lg transition-transform duration-300 hover:scale-110 active:scale-95 ${
-          isOpen ? "rotate-180 scale-0 opacity-0 pointer-events-none absolute" : "rotate-0 scale-100 opacity-100"
-        }`}
-        aria-label="Leyenda de iconos"
+        className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-slate-500 shadow-xs ring-1 ring-slate-200 transition-colors hover:bg-slate-200 hover:text-slate-700"
+        aria-label="Información sobre iconos"
+        title="Ver leyenda de iconos"
       >
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" strokeWidth="2" />
-          <path d="M12 16v-4" strokeWidth="2" strokeLinecap="round" />
-          <path d="M12 8h.01" strokeWidth="3" strokeLinecap="round" />
+        <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </button>
+
+      {/* Popover */}
+      <div
+        className={`absolute right-0 top-6 z-50 w-64 origin-top-right sm:origin-top-left sm:left-0 sm:right-auto sm:-translate-x-4 rounded-xl border border-slate-200 bg-white p-3 shadow-xl transition-all duration-300 ease-out ${
+          isOpen ? "scale-100 opacity-100 pointer-events-auto translate-y-0" : "scale-95 opacity-0 pointer-events-none -translate-y-2"
+        }`}
+      >
+        <div className="mb-1.5 flex items-center justify-between">
+          <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-950">Leyenda</h4>
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Cerrar"
+          >
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <p className="mb-3 text-[10px] font-medium leading-relaxed text-slate-500">
+          Basado en prensa y situación contractual:
+        </p>
+        <div className="space-y-1.5">
+          {Object.entries(salidaStrength).map(([key, config]) => (
+            <div key={key} className="flex items-center gap-2">
+              <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${config.badge.replace("hover:scale-110", "")}`}>
+                <div className="scale-[0.5]">{config.icon}</div>
+              </div>
+              <span className="text-[10px] font-bold text-slate-700">{config.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
