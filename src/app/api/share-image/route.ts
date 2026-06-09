@@ -13,9 +13,10 @@ export const runtime = "nodejs";
 type Body = {
   decisions: Record<string, Decision>;
   priorities: MarketPriority[];
+  variant?: "planning" | "positions";
 };
 
-type ImagePlayer = Player & { imageSrc?: string };
+type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
 
 async function imageToDataUrl(url: string) {
   if (!url) return undefined;
@@ -33,7 +34,7 @@ async function imageToDataUrl(url: string) {
   }
 }
 
-async function hydrateImages(groups: SummaryGroups) {
+async function hydrateImages(groups: SummaryGroups, decisions: Record<string, Decision>) {
   const unique = new Map<string, Player>();
   Object.values(groups).forEach((players) => players.forEach((player) => unique.set(player.id, player)));
 
@@ -45,7 +46,7 @@ async function hydrateImages(groups: SummaryGroups) {
   return Object.fromEntries(
     Object.entries(groups).map(([key, players]) => [
       key,
-      players.map((player) => ({ ...player, imageSrc: images.get(player.id) }))
+      players.map((player) => ({ ...player, imageSrc: images.get(player.id), imageStatus: decisions[player.id]?.decisionValue }))
     ])
   ) as Record<keyof SummaryGroups, ImagePlayer[]>;
 }
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as Body;
   const decisions = body.decisions || {};
   const priorities = body.priorities || [];
+  const variant = body.variant || "planning";
   const groups = generateSummary(allPlayers, decisions);
 
   (Object.keys(groups) as (keyof typeof groups)[]).forEach((key) => {
@@ -86,7 +88,7 @@ export async function POST(request: Request) {
   });
 
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
-  const groupsWithImages = await hydrateImages(groups);
+  const groupsWithImages = await hydrateImages(groups, decisions);
   const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
   const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
   const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
@@ -101,7 +103,9 @@ export async function POST(request: Request) {
   const background = stadiumBuffer ? `data:image/jpeg;base64,${stadiumBuffer.toString("base64")}` : undefined;
   const logo = logoBuffer ? `data:image/png;base64,${logoBuffer.toString("base64")}` : undefined;
 
-  const svg = await satori(createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label, background, logo }), {
+  const svg = await satori(
+    createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label, background, logo, variant }),
+    {
     width: 2160,
     height: 2700,
     fonts: [
@@ -118,7 +122,8 @@ export async function POST(request: Request) {
         style: "normal"
       }
     ]
-  });
+    }
+  );
 
   const png = new Resvg(svg, {
     fitTo: {

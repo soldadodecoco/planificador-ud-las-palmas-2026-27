@@ -1,7 +1,6 @@
-import { priorityLabels } from "@/lib/market";
 import { MarketPriority, Player, SummaryGroups } from "@/types";
 
-type ImagePlayer = Player & { imageSrc?: string };
+type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
 type ImageGroups = Record<keyof SummaryGroups, ImagePlayer[]>;
 
 type Props = {
@@ -10,6 +9,7 @@ type Props = {
   label: string;
   background?: string;
   logo?: string;
+  variant?: "planning" | "positions";
 };
 
 const W = 2160;
@@ -24,6 +24,17 @@ const panel = {
   padding: 26
 };
 
+const salidaValues = new Set([
+  "dejar_salir",
+  "asumir_salida",
+  "asumir_salida_cedido",
+  "salida",
+  "vender",
+  "buscar_salida",
+  "dejar_marchar"
+]);
+const pretemporadaValues = new Set(["pretemporada", "renovar_y_pretemporada"]);
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -34,7 +45,15 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function PlayerPill({ player }: { player: ImagePlayer }) {
+function PlayerPill({
+  player,
+  muted = false,
+  preseason = false
+}: {
+  player: ImagePlayer;
+  muted?: boolean;
+  preseason?: boolean;
+}) {
   return (
     <div
       style={{
@@ -45,7 +64,7 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
         minHeight: 66,
         padding: "8px 12px",
         borderRadius: 18,
-        background: "rgba(255,255,255,0.94)",
+        background: muted ? "rgba(226,232,240,0.82)" : "rgba(255,255,255,0.94)",
         color: "#07182f"
       }}
     >
@@ -59,6 +78,7 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
           borderRadius: 14,
           overflow: "hidden",
           background: "#07182f",
+          position: "relative",
           flexShrink: 0,
           color: "#ffe000",
           fontSize: 18,
@@ -66,14 +86,52 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
         }}
       >
         {player.imageSrc ? (
-          <img src={player.imageSrc} width={50} height={50} style={{ objectFit: "cover" }} />
+          <img
+            src={player.imageSrc}
+            width={50}
+            height={50}
+            style={{ objectFit: "cover", opacity: muted ? 0.45 : 1 }}
+          />
         ) : (
           initials(player.jugador)
         )}
+        {muted && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              display: "flex",
+              background: "rgba(148,163,184,0.62)"
+            }}
+          />
+        )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ display: "flex", fontSize: 23, lineHeight: 1.05, fontWeight: 900 }}>{player.jugador}</div>
-        <div style={{ display: "flex", marginTop: 4, fontSize: 15, lineHeight: 1, fontWeight: 700, color: "#0057b8" }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 23,
+            lineHeight: 1.05,
+            fontWeight: 900,
+            color: preseason ? "#38bdf8" : "#07182f",
+            textDecoration: muted ? "line-through" : "none"
+          }}
+        >
+          {player.jugador}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            marginTop: 4,
+            fontSize: 15,
+            lineHeight: 1,
+            fontWeight: 700,
+            color: preseason ? "#38bdf8" : "#0057b8"
+          }}
+        >
           {player.posicion}
         </div>
       </div>
@@ -81,7 +139,17 @@ function PlayerPill({ player }: { player: ImagePlayer }) {
   );
 }
 
-function Block({ title, players, compact = false, color = "#ffe000" }: { title: string; players: ImagePlayer[]; compact?: boolean; color?: string }) {
+function Block({
+  title,
+  players,
+  compact = false,
+  color = "#ffe000"
+}: {
+  title: string;
+  players: ImagePlayer[];
+  compact?: boolean;
+  color?: string;
+}) {
   return (
     <div style={{ ...panel, width: "100%", minHeight: compact ? 220 : 300 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
@@ -179,15 +247,98 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
   );
 }
 
-export function ShareImageTemplate({ groups, priorities, label, background, logo }: Props) {
+function uniquePlayers(groups: ImageGroups) {
+  const byId = new Map<string, ImagePlayer>();
+  Object.values(groups)
+    .flat()
+    .forEach((player) => {
+      if (!byId.has(player.id)) byId.set(player.id, player);
+    });
+  return [...byId.values()];
+}
+
+function PositionBlocks({ groups }: { groups: ImageGroups }) {
+  const players = uniquePlayers(groups).filter((player) => player.posicion !== "Entrenador");
+  const blocks = [
+    { title: "Porteros", value: "Portero" },
+    { title: "Defensas", value: "Defensa" },
+    { title: "Centrocampistas", value: "Centrocampista" },
+    { title: "Atacantes", value: "Atacante" }
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1, marginTop: 40 }}>
+      {blocks.map((block) => {
+        const blockPlayers = players.filter((player) => player.posicion === block.value);
+        if (blockPlayers.length === 0) return null;
+
+        return (
+          <div key={block.title} style={{ ...panel, width: "100%", minHeight: 260 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{block.title}</div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 58,
+                  height: 48,
+                  borderRadius: 999,
+                  background: "#ffe000",
+                  color: "#07182f",
+                  fontSize: 28,
+                  fontWeight: 900
+                }}
+              >
+                {blockPlayers.length}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
+              {blockPlayers.map((player) => (
+                <PlayerPill
+                  key={player.id}
+                  player={player}
+                  muted={salidaValues.has(player.imageStatus || "")}
+                  preseason={pretemporadaValues.has(player.imageStatus || "")}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CoachPill({ entrenador, status }: { entrenador: ImagePlayer; status: string }) {
+  return (
+    <div style={{ display: "flex", width: "100%", justifyContent: "center", marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 32px 12px 12px", background: "rgba(255,255,255,0.95)", borderRadius: 100, border: "4px solid rgba(255,255,255,0.15)", backgroundClip: "padding-box" }}>
+        <div style={{ display: "flex", width: 80, height: 80, borderRadius: 999, overflow: "hidden", background: "#07182f", color: "#ffe000", fontSize: 28, fontWeight: 900, alignItems: "center", justifyContent: "center" }}>
+          {entrenador.imageSrc ? <img src={entrenador.imageSrc} width={80} height={80} style={{ objectFit: "cover" }} /> : initials(entrenador.jugador)}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ display: "flex", fontSize: 20, fontWeight: 900, color: "#0057b8", marginBottom: 4 }}>ENTRENADOR</div>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: "#07182f", lineHeight: 1 }}>{entrenador.jugador}</div>
+        </div>
+        <div style={{ width: 3, height: 60, background: "#e2e8f0", marginLeft: 16, marginRight: 16 }} />
+        <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: status === "Se marcha" ? "#ef4444" : status === "Se queda" ? "#22c55e" : "#f59e0b" }}>
+          {status.toUpperCase()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ShareImageTemplate({ groups, priorities, background, logo, variant = "planning" }: Props) {
   const allPlayers = Object.values(groups).flat();
   const entrenador = allPlayers.find((p) => p.posicion === "Entrenador") as ImagePlayer | undefined;
   let entrenadorStatus = "Duda";
 
   if (entrenador) {
-    if (groups.salidas?.some(p => p.id === entrenador.id) || groups.escucharOfertas?.some(p => p.id === entrenador.id)) {
+    if (groups.salidas?.some((p) => p.id === entrenador.id) || groups.escucharOfertas?.some((p) => p.id === entrenador.id)) {
       entrenadorStatus = "Se marcha";
-    } else if (groups.siguen?.some(p => p.id === entrenador.id) || groups.renovaciones?.some(p => p.id === entrenador.id)) {
+    } else if (groups.siguen?.some((p) => p.id === entrenador.id) || groups.renovaciones?.some((p) => p.id === entrenador.id)) {
       entrenadorStatus = "Se queda";
     }
   }
@@ -234,7 +385,6 @@ export function ShareImageTemplate({ groups, priorities, label, background, logo
           fontFamily: "Manrope"
         }}
       >
-        {/* Header Redesign */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", marginBottom: 30 }}>
           <div style={{ display: "flex", fontFamily: "Manrope", fontSize: 30, letterSpacing: 10, fontWeight: 400, color: "white", marginBottom: 35 }}>
             UD LAS PALMAS 2026/27
@@ -252,38 +402,24 @@ export function ShareImageTemplate({ groups, priorities, label, background, logo
           </div>
         </div>
 
-        {entrenador && (
-          <div style={{ display: "flex", width: "100%", justifyContent: "center", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 32px 12px 12px", background: "rgba(255,255,255,0.95)", borderRadius: 100, border: "4px solid rgba(255,255,255,0.15)", backgroundClip: "padding-box" }}>
-              <div style={{ display: "flex", width: 80, height: 80, borderRadius: 999, overflow: "hidden", background: "#07182f", color: "#ffe000", fontSize: 28, fontWeight: 900, alignItems: "center", justifyContent: "center" }}>
-                {entrenador.imageSrc ? <img src={entrenador.imageSrc} width={80} height={80} style={{ objectFit: "cover" }} /> : initials(entrenador.jugador)}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                 <div style={{ display: "flex", fontSize: 20, fontWeight: 900, color: "#0057b8", marginBottom: 4 }}>ENTRENADOR</div>
-                 <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: "#07182f", lineHeight: 1 }}>{entrenador.jugador}</div>
-              </div>
-              <div style={{ width: 3, height: 60, background: "#e2e8f0", marginLeft: 16, marginRight: 16 }} />
-              <div style={{ display: "flex", fontSize: 34, fontWeight: 900, color: entrenadorStatus === "Se marcha" ? "#ef4444" : entrenadorStatus === "Se queda" ? "#22c55e" : "#f59e0b" }}>
-                 {entrenadorStatus.toUpperCase()}
-              </div>
+        {entrenador && <CoachPill entrenador={entrenador} status={entrenadorStatus} />}
+
+        {variant === "positions" ? (
+          <PositionBlocks groups={filteredGroups} />
+        ) : (
+          <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 40 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
+              {filteredGroups.renovaciones.length > 0 && <Block title="Renovaciones" players={filteredGroups.renovaciones} />}
+              {filteredGroups.siguen.length > 0 && <Block title="Continúan" players={filteredGroups.siguen} compact />}
+              {filteredGroups.cantera.length > 0 && <Block title="Suben de la cantera" players={filteredGroups.cantera} />}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
+              {filteredGroups.salidas.length > 0 && <Block title="Salidas" players={filteredGroups.salidas} color="#ef4444" />}
+              {filteredGroups.dudas.length > 0 && <Block title="Dudas" players={filteredGroups.dudas} />}
             </div>
           </div>
         )}
-
-        <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 40 }}>
-          {/* Columna Izquierda */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
-            {filteredGroups.renovaciones.length > 0 && <Block title="Renovaciones" players={filteredGroups.renovaciones} />}
-            {filteredGroups.siguen.length > 0 && <Block title="Continúan" players={filteredGroups.siguen} compact />}
-            {filteredGroups.cantera.length > 0 && <Block title="Suben de la cantera" players={filteredGroups.cantera} />}
-          </div>
-
-          {/* Columna Derecha */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
-            {filteredGroups.salidas.length > 0 && <Block title="Salidas" players={filteredGroups.salidas} color="#ef4444" />}
-            {filteredGroups.dudas.length > 0 && <Block title="Dudas" players={filteredGroups.dudas} />}
-          </div>
-        </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: "auto" }}>
           <MarketBlock priorities={priorities} />

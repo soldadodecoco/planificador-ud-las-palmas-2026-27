@@ -17,6 +17,7 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [variant, setVariant] = useState<"planning" | "positions">("planning");
 
   const groups = useMemo(() => generateSummary(players, decisions), [players, decisions]);
   const label = useMemo(() => calculatePlanningLabel(players, decisions, priorities), [players, decisions, priorities]);
@@ -29,7 +30,7 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
         const response = await fetch("/api/share-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ decisions, priorities })
+          body: JSON.stringify({ decisions, priorities, variant })
         });
         if (response.ok) {
           const blob = await response.blob();
@@ -49,12 +50,15 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [decisions, priorities]);
+  }, [decisions, priorities, variant]);
 
   async function downloadImage() {
     if (previewUrl) {
       const link = document.createElement("a");
-      link.download = "mi-planificacion-ud-las-palmas-2026-27.png";
+      link.download =
+        variant === "positions"
+          ? "mi-planificacion-ud-las-palmas-2026-27-por-posicion.png"
+          : "mi-planificacion-ud-las-palmas-2026-27.png";
       link.href = previewUrl;
       link.click();
       return;
@@ -66,13 +70,16 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
       const response = await fetch("/api/share-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decisions, priorities })
+        body: JSON.stringify({ decisions, priorities, variant })
       });
       if (!response.ok) throw new Error("No se pudo generar la imagen.");
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = "mi-planificacion-ud-las-palmas-2026-27.png";
+      link.download =
+        variant === "positions"
+          ? "mi-planificacion-ud-las-palmas-2026-27-por-posicion.png"
+          : "mi-planificacion-ud-las-palmas-2026-27.png";
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
@@ -85,6 +92,26 @@ export function ShareImage({ players, decisions, priorities, pendingCount, onEdi
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-center">
+        <div className="grid grid-cols-2 gap-2 rounded-lg bg-white p-1 ring-1 ring-slate-200">
+          {[
+            { id: "planning", label: "Planificación deportiva" },
+            { id: "positions", label: "Por posición" }
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setVariant(option.id as "planning" | "positions")}
+              className={`cursor-pointer rounded-md px-4 py-2 text-sm font-black transition ${
+                variant === option.id ? "bg-[#0057b8] text-white" : "bg-white text-slate-700 hover:bg-slate-100"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-wrap justify-center gap-2">
         <button
           type="button"
