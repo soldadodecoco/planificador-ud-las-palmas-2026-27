@@ -92,24 +92,25 @@ export default function Home() {
 
   return (
     <main>
-      <SectionNavigator activeSection={activeSection} />
+      {activeSection !== "inicio" && <SectionNavigator activeSection={activeSection} />}
 
       {activeSection === "inicio" ? (
-        <section className="min-h-[calc(100vh-73px)] bg-[#07182f] text-white">
-          <div className="section-transition mx-auto max-w-5xl px-4 py-14 md:py-24">
-            <div className="max-w-3xl">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#ffe000]">Temporada 2026/27</p>
-              <h1 className="mt-5 text-5xl font-black leading-tight sm:text-7xl">Planifica la UD Las Palmas 2026/27</h1>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button type="button" onClick={() => setActiveSection("entrenador")} className="rounded-md bg-[#ffe000] px-5 py-4 font-black text-[#07182f]">
-                  Empezar planificación
+        <section className="min-h-screen flex items-center justify-center bg-[#07182f] text-white">
+          <div className="section-transition mx-auto max-w-5xl px-4 py-14 md:py-24 flex flex-col items-center text-center">
+            <p className="text-sm font-black uppercase tracking-[0.3em] text-[#ffe000]">Temporada 2026/27</p>
+            <h1 className="mt-8 text-6xl font-black leading-[1.1] sm:text-[6.5rem] tracking-tight">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">Planifica la</span>
+              <span className="block mt-2 text-[#ffe000] drop-shadow-lg">UD Las Palmas</span>
+            </h1>
+            <div className="mt-14 flex flex-wrap justify-center gap-4">
+              <button type="button" onClick={() => setActiveSection("entrenador")} className="rounded-full bg-[#ffe000] px-8 py-5 text-lg font-black text-[#07182f] shadow-xl hover:scale-105 transition-transform">
+                Empezar planificación
+              </button>
+              {hasPreviousPlan && (
+                <button type="button" onClick={() => setActiveSection("resumen")} className="rounded-full bg-white/10 backdrop-blur-sm px-8 py-5 text-lg font-black text-white hover:bg-white/20 transition-colors ring-1 ring-white/20">
+                  Continuar planificación anterior
                 </button>
-                {hasPreviousPlan && (
-                  <button type="button" onClick={() => setActiveSection("resumen")} className="rounded-md bg-white px-5 py-4 font-black text-[#07182f]">
-                    Continuar planificación anterior
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </section>
