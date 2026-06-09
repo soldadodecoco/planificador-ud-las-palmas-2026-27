@@ -55,24 +55,64 @@ export async function POST(request: Request) {
   const decisions = body.decisions || {};
   const priorities = body.priorities || [];
   const groups = generateSummary(allPlayers, decisions);
+
+  (Object.keys(groups) as (keyof typeof groups)[]).forEach((key) => {
+    if (key !== "cantera") {
+      groups[key] = groups[key].filter(
+        (player) => player.tipo_decision !== "filial" && player.tipo_decision !== "fin_contrato_filial"
+      );
+    }
+  });
+
+  const canteraAllowed = ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"];
+  groups.cantera = groups.cantera.filter(
+    (player) =>
+      (player.tipo_decision === "filial" || player.tipo_decision === "fin_contrato_filial") &&
+      canteraAllowed.includes(decisions[player.id]?.decisionValue as string)
+  );
+
+  const positionOrder: Record<string, number> = {
+    Portero: 1,
+    Defensa: 2,
+    Centrocampista: 3,
+    Atacante: 4,
+    Entrenador: 0
+  };
+  const sortPlayers = (players: Player[]) =>
+    [...players].sort((a, b) => (positionOrder[a.posicion] || 99) - (positionOrder[b.posicion] || 99));
+
+  (Object.keys(groups) as (keyof typeof groups)[]).forEach((key) => {
+    groups[key] = sortPlayers(groups[key]);
+  });
+
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups);
-  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Arial.ttf");
-  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "AgencyBold.ttf");
-  const [fontData, boldFontData] = await Promise.all([fs.readFile(fontPath), fs.readFile(boldFontPath)]);
+  const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
+  const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
+  const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
+  const logoPath = path.join(process.cwd(), "public", "logo.png");
+  const [fontData, boldFontData, stadiumBuffer, logoBuffer] = await Promise.all([
+    fs.readFile(fontPath),
+    fs.readFile(boldFontPath),
+    fs.readFile(stadiumPath).catch(() => null),
+    fs.readFile(logoPath).catch(() => null)
+  ]);
 
-  const svg = await satori(createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label }), {
+  const background = stadiumBuffer ? `data:image/jpeg;base64,${stadiumBuffer.toString("base64")}` : undefined;
+  const logo = logoBuffer ? `data:image/png;base64,${logoBuffer.toString("base64")}` : undefined;
+
+  const svg = await satori(createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label, background, logo }), {
     width: 2160,
     height: 2700,
     fonts: [
       {
-        name: "Arial",
+        name: "Manrope",
         data: fontData,
         weight: 400,
         style: "normal"
       },
       {
-        name: "Arial",
+        name: "Archivo",
         data: boldFontData,
         weight: 900,
         style: "normal"
