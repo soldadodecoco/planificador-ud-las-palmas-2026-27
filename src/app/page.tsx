@@ -115,8 +115,8 @@ export default function Home() {
           </div>
         </section>
       ) : (
-        <div className="bg-gradient-to-b from-[#07182f] to-slate-50 min-h-screen pb-12 pt-6 px-2 sm:px-6">
-          <section key={activeSection} className="section-transition mx-auto max-w-7xl px-5 py-8 sm:p-10 bg-white rounded-3xl shadow-2xl ring-1 ring-slate-900/5">
+        <div className="planning-enter-bg min-h-[calc(100vh-73px)]">
+          <section key={activeSection} className="section-transition mx-auto max-w-7xl px-4 py-8">
           <div className="mb-6">
             <div>
               {activeIndex > 0 && activeIndex <= 7 && (
