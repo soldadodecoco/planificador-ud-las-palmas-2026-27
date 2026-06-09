@@ -180,21 +180,21 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
 }
 
 export function ShareImageTemplate({ groups, priorities, label, background, logo }: Props) {
-  let entrenador: ImagePlayer | null = null;
-  let entrenadorStatus = "";
-  const filteredGroups = {} as ImageGroups;
+  const allPlayers = Object.values(groups).flat();
+  const entrenador = allPlayers.find((p) => p.posicion === "Entrenador") as ImagePlayer | undefined;
+  let entrenadorStatus = "Duda";
 
+  if (entrenador) {
+    if (groups.salidas?.some(p => p.id === entrenador.id) || groups.escucharOfertas?.some(p => p.id === entrenador.id)) {
+      entrenadorStatus = "Se marcha";
+    } else if (groups.siguen?.some(p => p.id === entrenador.id) || groups.renovaciones?.some(p => p.id === entrenador.id)) {
+      entrenadorStatus = "Se queda";
+    }
+  }
+
+  const filteredGroups = {} as ImageGroups;
   (Object.keys(groups) as (keyof ImageGroups)[]).forEach((key) => {
-    filteredGroups[key] = groups[key].filter((p) => {
-      if (p.posicion === "Entrenador") {
-        entrenador = p;
-        if (key === "salidas" || key === "escucharOfertas") entrenadorStatus = "Se marcha";
-        else if (key === "siguen" || key === "renovaciones") entrenadorStatus = "Se queda";
-        else entrenadorStatus = "Duda";
-        return false;
-      }
-      return true;
-    });
+    filteredGroups[key] = groups[key].filter((p) => p.posicion !== "Entrenador");
   });
 
   return (
