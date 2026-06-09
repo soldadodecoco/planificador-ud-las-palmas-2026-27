@@ -64,7 +64,7 @@ export function LegendToast() {
           </button>
         </div>
         <p className="mb-3 text-[10px] font-medium leading-relaxed text-slate-500">
-          Basado en prensa y situación contractual:
+          Estos iconos, basados en rumores de prensa y situación contractual, indican la probabilidad de que un jugador abandone el club:
         </p>
         <div className="space-y-1.5">
           {Object.entries(salidaStrength).map(([key, config]) => (
