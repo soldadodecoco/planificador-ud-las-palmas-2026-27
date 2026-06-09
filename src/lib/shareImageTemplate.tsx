@@ -270,6 +270,7 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1, marginTop: 40 }}>
       {blocks.map((block) => {
         const blockPlayers = players.filter((player) => player.posicion === block.value);
+        const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length;
         if (blockPlayers.length === 0) return null;
 
         return (
@@ -290,7 +291,7 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
                   fontWeight: 900
                 }}
               >
-                {blockPlayers.length}
+                {stayingCount}
               </div>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
