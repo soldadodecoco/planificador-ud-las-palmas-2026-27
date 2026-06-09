@@ -21,7 +21,7 @@ export const salidaStrength: Record<
 > = {
   Alta: {
     badge: "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:scale-110 shadow-xs",
-    title: "Salida muy probable (Alta)",
+    title: "Salida muy probable",
     icon: (
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -32,7 +32,7 @@ export const salidaStrength: Record<
   },
   "Media alta": {
     badge: "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 hover:scale-110 shadow-xs",
-    title: "Salida probable (Media alta)",
+    title: "Salida probable",
     icon: (
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -43,7 +43,7 @@ export const salidaStrength: Record<
   },
   Media: {
     badge: "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 hover:scale-110 shadow-xs",
-    title: "Situación incierta (Media)",
+    title: "Situación incierta",
     icon: (
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -54,7 +54,7 @@ export const salidaStrength: Record<
   },
   "Media baja": {
     badge: "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 hover:scale-110 shadow-xs",
-    title: "Poco probable que salga (Media baja)",
+    title: "Poco probable que salga",
     icon: (
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -65,7 +65,7 @@ export const salidaStrength: Record<
   },
   Baja: {
     badge: "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:scale-110 shadow-xs",
-    title: "Se queda en el club (Salida baja)",
+    title: "Se queda en el club",
     icon: (
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
