@@ -73,6 +73,46 @@ select {
   animation: market-popover-enter 180ms ease-out both;
 }
 
+.market-slider {
+  appearance: none;
+  background: transparent;
+  height: 34px;
+}
+
+.market-slider::-webkit-slider-runnable-track {
+  background: #07182f;
+  border: 1px solid #07182f;
+  border-radius: 6px;
+  height: 34px;
+}
+
+.market-slider::-webkit-slider-thumb {
+  appearance: none;
+  background: #ffe000;
+  border: 2px solid #07182f;
+  border-radius: 5px;
+  box-shadow: 0 6px 14px rgba(7, 24, 47, 0.22);
+  height: 28px;
+  margin-top: 2px;
+  width: 34px;
+}
+
+.market-slider::-moz-range-track {
+  background: #07182f;
+  border: 1px solid #07182f;
+  border-radius: 6px;
+  height: 34px;
+}
+
+.market-slider::-moz-range-thumb {
+  background: #ffe000;
+  border: 2px solid #07182f;
+  border-radius: 5px;
+  box-shadow: 0 6px 14px rgba(7, 24, 47, 0.22);
+  height: 28px;
+  width: 34px;
+}
+
 .summary-switch {
   animation: summary-switch-enter 220ms ease-out both;
 }

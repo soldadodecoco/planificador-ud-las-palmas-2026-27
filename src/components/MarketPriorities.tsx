@@ -92,13 +92,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
 
           return (
             <section key={position.id} className="relative rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-base font-black text-slate-950">{position.label}</h3>
-                <span className="text-xs font-black text-slate-500">
-                  {priorityShortLabels[current.priority]}
-                  {current.targetCount > 0 ? ` · ${current.targetCount}` : ""}
-                </span>
-              </div>
+              <h3 className="text-base font-black text-slate-950">{position.label}</h3>
 
               <div className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -135,7 +129,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
                       targetCount: priority === "none" ? 0 : current.targetCount || 1
                     });
                   }}
-                  className="mx-auto block w-56 max-w-full cursor-pointer accent-[#0057b8]"
+                  className="market-slider mx-auto block w-56 max-w-full cursor-pointer"
                   aria-label={`Prioridad ${position.label}`}
                 />
                 <div className="mx-auto w-56 max-w-full text-right text-[10px] font-black uppercase tracking-wide text-slate-500">
