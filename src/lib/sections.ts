@@ -11,7 +11,7 @@ export const sections: { id: SectionId; label: string; shortLabel: string }[] = 
   { id: "cantera", label: "Las Palmas Atlético", shortLabel: "Atlético" },
   { id: "mercado", label: "Prioridades de mercado", shortLabel: "Mercado" },
   { id: "resumen", label: "Resumen", shortLabel: "Resumen" },
-  { id: "imagen", label: "Mi UD Las Palmas 2026/27", shortLabel: "Imagen" }
+  { id: "imagen", label: "UD Las Palmas 2026/27", shortLabel: "Imagen" }
 ];
 
 function isFilial(player: Player) {

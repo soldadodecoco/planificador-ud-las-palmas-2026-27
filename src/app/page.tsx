@@ -22,7 +22,7 @@ const sectionTitles: Partial<Record<SectionId, string>> = {
   cantera: "Las Palmas Atlético",
   mercado: "Prioridades de mercado por posición",
   resumen: "Resumen",
-  imagen: "Mi UD Las Palmas 2026/27"
+  imagen: "UD Las Palmas 2026/27"
 };
 
 export default function Home() {
