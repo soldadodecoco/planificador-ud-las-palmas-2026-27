@@ -275,50 +275,59 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
     { title: "Centrocampistas", value: "Centrocampista" },
     { title: "Atacantes", value: "Atacante" }
   ];
+  const visibleBlocks = blocks
+    .map((block) => {
+      const blockPlayers = players.filter((player) => player.posicion === block.value);
+      const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length;
+      return { ...block, players: blockPlayers, stayingCount };
+    })
+    .filter((block) => block.players.length > 0);
+
+  const columns = [visibleBlocks.filter((_, index) => index % 2 === 0), visibleBlocks.filter((_, index) => index % 2 === 1)];
+
+  const renderBlock = (block: (typeof visibleBlocks)[number]) => (
+    <div key={block.title} style={{ ...panel, width: 970, minHeight: 250 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{block.title}</div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minWidth: 58,
+            height: 48,
+            borderRadius: 999,
+            background: "#ffe000",
+            color: "#07182f",
+            fontSize: 28,
+            fontWeight: 900
+          }}
+        >
+          {block.stayingCount}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
+        {block.players.map((player) => (
+          <PlayerPill
+            key={player.id}
+            player={player}
+            muted={salidaValues.has(player.imageStatus || "")}
+            preseason={pretemporadaValues.has(player.imageStatus || "")}
+            doubt={doubtValues.has(player.imageStatus || "")}
+            offer={offerValues.has(player.imageStatus || "")}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, flex: 1, marginTop: 40 }}>
-      {blocks.map((block) => {
-        const blockPlayers = players.filter((player) => player.posicion === block.value);
-        const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length;
-        if (blockPlayers.length === 0) return null;
-
-        return (
-          <div key={block.title} style={{ ...panel, width: "100%", minHeight: 260 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-              <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000" }}>{block.title}</div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 58,
-                  height: 48,
-                  borderRadius: 999,
-                  background: "#ffe000",
-                  color: "#07182f",
-                  fontSize: 28,
-                  fontWeight: 900
-                }}
-              >
-                {stayingCount}
-              </div>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
-              {blockPlayers.map((player) => (
-                <PlayerPill
-                  key={player.id}
-                  player={player}
-                  muted={salidaValues.has(player.imageStatus || "")}
-                  preseason={pretemporadaValues.has(player.imageStatus || "")}
-                  doubt={doubtValues.has(player.imageStatus || "")}
-                  offer={offerValues.has(player.imageStatus || "")}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+    <div style={{ display: "flex", width: "100%", gap: 40, marginTop: 26 }}>
+      {columns.map((column, index) => (
+        <div key={index} style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
+          {column.map(renderBlock)}
+        </div>
+      ))}
     </div>
   );
 }
@@ -331,7 +340,7 @@ function PositionLegend() {
   ];
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", width: "100%", marginTop: 20 }}>
+    <div style={{ display: "flex", justifyContent: "center", width: "100%", marginTop: 18 }}>
       <div
         style={{
           display: "flex",
