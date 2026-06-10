@@ -1,4 +1,3 @@
-import { priorityShortLabels } from "@/lib/market";
 import { MarketPriority, Player, SummaryGroups } from "@/types";
 
 type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
@@ -226,7 +225,7 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
                 fontWeight: 800
               }}
             >
-              {p.positionLabel} · {priorityShortLabels[p.priority]}
+              {p.positionLabel}
               {p.targetCount > 0 ? ` · ${p.targetCount}` : ""}
             </div>
           ))}
