@@ -1,3 +1,4 @@
+import { fieldPositionGroups, lineForPlayer, sortByFieldPosition } from "@/lib/fieldPositions";
 import { MarketPriority, Player, SummaryGroups } from "@/types";
 
 type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
@@ -183,7 +184,7 @@ function Block({
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
         {players.length ? (
-          players.map((player) => <PlayerPill key={player.id} player={player} />)
+          sortByFieldPosition(players).map((player) => <PlayerPill key={player.id} player={player} />)
         ) : (
           <div
             style={{
@@ -277,7 +278,7 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
   ];
   const visibleBlocks = blocks
     .map((block) => {
-      const blockPlayers = players.filter((player) => player.posicion === block.value);
+      const blockPlayers = sortByFieldPosition(players.filter((player) => lineForPlayer(player) === block.value));
       const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length;
       return { ...block, players: blockPlayers, stayingCount };
     })
@@ -306,16 +307,25 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
           {block.stayingCount}
         </div>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 20 }}>
-        {block.players.map((player) => (
-          <PlayerPill
-            key={player.id}
-            player={player}
-            muted={salidaValues.has(player.imageStatus || "")}
-            preseason={pretemporadaValues.has(player.imageStatus || "")}
-            doubt={doubtValues.has(player.imageStatus || "")}
-            offer={offerValues.has(player.imageStatus || "")}
-          />
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 20 }}>
+        {fieldPositionGroups(block.players, block.value).map((fieldGroup) => (
+          <div key={fieldGroup.fieldPosition} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", fontSize: 18, lineHeight: 1, fontWeight: 900, color: "rgba(255,255,255,0.62)", textTransform: "uppercase" }}>
+              {fieldGroup.label}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {fieldGroup.players.map((player) => (
+                <PlayerPill
+                  key={player.id}
+                  player={player}
+                  muted={salidaValues.has(player.imageStatus || "")}
+                  preseason={pretemporadaValues.has(player.imageStatus || "")}
+                  doubt={doubtValues.has(player.imageStatus || "")}
+                  offer={offerValues.has(player.imageStatus || "")}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>

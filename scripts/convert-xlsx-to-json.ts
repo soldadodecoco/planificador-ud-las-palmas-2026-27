@@ -49,6 +49,7 @@ const players: Player[] = rows
     id: slugify(text(row.jugador), index),
     jugador: text(row.jugador),
     posicion: text(row.posicion) as Player["posicion"],
+    posicion_campo: text(row.posicion_campo) as Player["posicion_campo"],
     fin_de_contrato: text(row.fin_de_contrato),
     tipo: text(row.tipo),
     opcion_compra: text(row.opcion_compra),

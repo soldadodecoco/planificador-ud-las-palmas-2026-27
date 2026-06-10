@@ -1,4 +1,22 @@
 export type Position = "Entrenador" | "Portero" | "Defensa" | "Centrocampista" | "Atacante" | "";
+export type FieldPosition =
+  | "POR"
+  | "LD"
+  | "DFC_D"
+  | "DFC"
+  | "DFC_I"
+  | "LI"
+  | "MCD"
+  | "MCO"
+  | "MC_D"
+  | "MC"
+  | "MC_I"
+  | "MP"
+  | "ED"
+  | "EI"
+  | "SD"
+  | "DC"
+  | "";
 
 export type DecisionType =
   | "posible_venta"
@@ -42,6 +60,7 @@ export type Player = {
   id: string;
   jugador: string;
   posicion: Position;
+  posicion_campo: FieldPosition;
   fin_de_contrato: string;
   tipo: string;
   opcion_compra: string;

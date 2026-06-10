@@ -3,6 +3,7 @@
 import { priorityShortLabels } from "@/lib/market";
 import { calculateRosterCounts } from "@/lib/rosterCounts";
 import { generateSummary } from "@/lib/summary";
+import { fieldPositionGroups, lineForPlayer, sortByFieldPosition } from "@/lib/fieldPositions";
 import { Decision, MarketPriority, Player, SectionId } from "@/types";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -103,11 +104,13 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
     () =>
       positionOrder.map((position) => ({
         position,
-        players: decidedPlayers.filter((player) => {
-          const decision = decisions[player.id];
-          const isOutgoing = Boolean(decision && salidaValues.has(decision.decisionValue));
-          return player.posicion === position && (!hideOutgoing || !isOutgoing);
-        })
+        players: sortByFieldPosition(
+          decidedPlayers.filter((player) => {
+            const decision = decisions[player.id];
+            const isOutgoing = Boolean(decision && salidaValues.has(decision.decisionValue));
+            return lineForPlayer(player) === position && (!hideOutgoing || !isOutgoing);
+          })
+        )
       })),
     [decidedPlayers, decisions, hideOutgoing]
   );
@@ -152,7 +155,7 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
         {view === "categories" ? (
           <motion.div layout className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {Object.entries(summaryLabels).map(([key, label]) => {
-              const list = groups[key as keyof typeof groups];
+              const list = sortByFieldPosition(groups[key as keyof typeof groups]);
               if (list.length === 0) return null;
               return (
                 <motion.section
@@ -188,20 +191,27 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
                   <h3 className="text-base font-black text-slate-950">{group.position}</h3>
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-700">{group.players.length}</span>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-1.5">
-                  <AnimatePresence initial={false}>
-                    {group.players.map((player) => {
-                      const decision = decisions[player.id];
-                      return (
-                        <PlayerLine
-                          key={player.id}
-                          player={player}
-                          decision={decision}
-                          strike={Boolean(decision && salidaValues.has(decision.decisionValue))}
-                        />
-                      );
-                    })}
-                  </AnimatePresence>
+                <div className="mt-2 space-y-2">
+                  {fieldPositionGroups(group.players, group.position).map((fieldGroup) => (
+                    <div key={fieldGroup.fieldPosition}>
+                      <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-slate-400">{fieldGroup.label}</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <AnimatePresence initial={false}>
+                          {fieldGroup.players.map((player) => {
+                            const decision = decisions[player.id];
+                            return (
+                              <PlayerLine
+                                key={player.id}
+                                player={player}
+                                decision={decision}
+                                strike={Boolean(decision && salidaValues.has(decision.decisionValue))}
+                              />
+                            );
+                          })}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </motion.section>
             ))}
