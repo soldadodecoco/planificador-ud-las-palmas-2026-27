@@ -74,7 +74,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
     <div className="space-y-5">
       <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-black text-slate-800">
         <span>
-          {rosterCounts.firstTeam} + {rosterCounts.signings} fichajes = {rosterCounts.estimatedSquad}
+          Plantilla actual: {rosterCounts.firstTeam} + {rosterCounts.signings} fichajes = {rosterCounts.estimatedSquad} jugadores
         </span>
         <span className="text-slate-500">{rosterCounts.preseason} pretemporada</span>
       </div>
@@ -101,25 +101,8 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
               </div>
 
               <div className="mt-3 space-y-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={3}
-                  step={1}
-                  value={levelToIndex(current.priority)}
-                  onChange={(event) => {
-                    const priority = indexToLevel(Number(event.target.value));
-                    update(position.id, {
-                      priority,
-                      targetCount: priority === "none" ? 0 : current.targetCount || 1
-                    });
-                  }}
-                  className="w-full cursor-pointer accent-[#0057b8]"
-                  aria-label={`Prioridad ${position.label}`}
-                />
-
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-black text-slate-700">Jugadores</span>
+                  <span className="text-sm font-black text-slate-700">Cantidad a fichar</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -137,6 +120,26 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
                       +
                     </button>
                   </div>
+                </div>
+
+                <input
+                  type="range"
+                  min={0}
+                  max={3}
+                  step={1}
+                  value={levelToIndex(current.priority)}
+                  onChange={(event) => {
+                    const priority = indexToLevel(Number(event.target.value));
+                    update(position.id, {
+                      priority,
+                      targetCount: priority === "none" ? 0 : current.targetCount || 1
+                    });
+                  }}
+                  className="mx-auto block w-56 max-w-full cursor-pointer accent-[#0057b8]"
+                  aria-label={`Prioridad ${position.label}`}
+                />
+                <div className="mx-auto w-56 max-w-full text-right text-[10px] font-black uppercase tracking-wide text-slate-500">
+                  Prioridad: {priorityShortLabels[current.priority]}
                 </div>
               </div>
 
