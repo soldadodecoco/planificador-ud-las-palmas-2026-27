@@ -92,7 +92,17 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
 
           return (
             <section key={position.id} className="relative rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="text-base font-black text-slate-950">{position.label}</h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-base font-black text-slate-950">{position.label}</h3>
+                <button
+                  type="button"
+                  onClick={() => setOpenPositionId((currentOpen) => (currentOpen === position.id ? null : position.id))}
+                  className="cursor-pointer text-[11px] font-black text-[#0057b8] hover:text-[#07182f]"
+                  aria-expanded={openPositionId === position.id}
+                >
+                  Ver {group.label}
+                </button>
+              </div>
 
               <div className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
@@ -129,23 +139,13 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
                       targetCount: priority === "none" ? 0 : current.targetCount || 1
                     });
                   }}
-                  className="market-slider mx-auto block w-56 max-w-full cursor-pointer"
+                  className="mx-auto block w-56 max-w-full cursor-pointer accent-[#0057b8]"
                   aria-label={`Prioridad ${position.label}`}
                 />
                 <div className="mx-auto w-56 max-w-full text-right text-[10px] font-black uppercase tracking-wide text-slate-500">
                   Prioridad: {priorityShortLabels[current.priority]}
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setOpenPositionId((currentOpen) => (currentOpen === position.id ? null : position.id))}
-                className="mt-3 flex w-full cursor-pointer items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-black text-[#0057b8] transition hover:border-[#0057b8] hover:bg-white"
-                aria-expanded={openPositionId === position.id}
-              >
-                <span>Ver {group.label}</span>
-                <span className={`transition-transform duration-200 ${openPositionId === position.id ? "rotate-180" : ""}`}>⌄</span>
-              </button>
 
               {openPositionId === position.id && (
                 <div className="market-popover absolute left-4 right-4 top-[calc(100%-8px)] z-30 rounded-md border border-slate-200 bg-white p-3 shadow-[0_18px_45px_rgba(7,24,47,0.18)]">
