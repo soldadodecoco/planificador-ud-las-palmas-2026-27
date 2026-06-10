@@ -1,6 +1,7 @@
 "use client";
 
-import { priorityLabels } from "@/lib/market";
+import { priorityShortLabels } from "@/lib/market";
+import { calculateRosterCounts } from "@/lib/rosterCounts";
 import { generateSummary } from "@/lib/summary";
 import { Decision, MarketPriority, Player, SectionId } from "@/types";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -96,6 +97,7 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
   const groups = useMemo(() => buildSummaryGroups(players, decisions), [players, decisions]);
   const decidedPlayers = useMemo(() => players.filter((player) => decisions[player.id]), [players, decisions]);
   const activePriorities = priorities.filter((priority) => priority.priority !== "none");
+  const rosterCounts = useMemo(() => calculateRosterCounts(decisions, priorities), [decisions, priorities]);
 
   const positionGroups = useMemo(
     () =>
@@ -218,12 +220,19 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
           {activePriorities.length ? (
             activePriorities.map((priority) => (
               <span key={priority.positionId} className="rounded bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">
-                {priority.positionLabel}: {priorityLabels[priority.priority]}
+                {priority.positionLabel}: {priorityShortLabels[priority.priority]}
+                {priority.targetCount > 0 ? ` · ${priority.targetCount}` : ""}
               </span>
             ))
           ) : (
             <p className="text-sm text-slate-700">Sin prioridades marcadas.</p>
           )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 text-sm font-black text-slate-800">
+          <span className="rounded bg-slate-50 px-3 py-2">{rosterCounts.firstTeam} en plantilla</span>
+          <span className="rounded bg-slate-50 px-3 py-2">{rosterCounts.signings} fichajes buscados</span>
+          <span className="rounded bg-slate-50 px-3 py-2">{rosterCounts.estimatedSquad} plantilla estimada</span>
+          <span className="rounded bg-slate-50 px-3 py-2">{rosterCounts.preseason} harían pretemporada</span>
         </div>
       </section>
     </div>

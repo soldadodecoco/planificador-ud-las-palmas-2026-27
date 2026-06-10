@@ -19,11 +19,19 @@ export const priorityLabels = {
   high: "Prioridad alta"
 };
 
+export const priorityShortLabels = {
+  none: "No tocar",
+  low: "Baja",
+  medium: "Media",
+  high: "Alta"
+};
+
 export function defaultMarketPriorities(): MarketPriority[] {
   return marketPositions.map((position) => ({
     positionId: position.id,
     positionLabel: position.label,
     priority: "none",
+    targetCount: 0,
     profileTag: undefined
   }));
 }

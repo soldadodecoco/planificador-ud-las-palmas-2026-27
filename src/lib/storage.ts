@@ -22,7 +22,16 @@ export function loadMarketPriorities(fallback: MarketPriority[]): MarketPriority
   if (typeof window === "undefined") return fallback;
   try {
     const stored = window.localStorage.getItem(marketKey);
-    return stored ? JSON.parse(stored) : fallback;
+    if (!stored) return fallback;
+    const parsed = JSON.parse(stored) as Partial<MarketPriority>[];
+    return fallback.map((fallbackPriority) => {
+      const storedPriority = parsed.find((priority) => priority.positionId === fallbackPriority.positionId);
+      return {
+        ...fallbackPriority,
+        ...storedPriority,
+        targetCount: storedPriority?.priority === "none" ? 0 : storedPriority?.targetCount || 0
+      };
+    });
   } catch {
     return fallback;
   }

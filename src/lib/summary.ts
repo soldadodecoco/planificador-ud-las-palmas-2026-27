@@ -1,4 +1,5 @@
 import { Decision, MarketPriority, Player, SummaryGroups } from "@/types";
+import { priorityShortLabels } from "@/lib/market";
 
 const summaryMap: Record<keyof SummaryGroups, string[]> = {
   renovaciones: ["renovar", "intentar_renovar", "renovar_y_pretemporada", "renovar_y_subir", "renovar_y_filial"],
@@ -44,7 +45,9 @@ export function calculatePlanningLabel(
   const cantera = values.filter((value) =>
     ["subir", "pretemporada", "seguir_filial", "renovar_y_pretemporada", "renovar_y_subir", "renovar_y_filial"].includes(value)
   ).length;
-  const altas = priorities.filter((priority) => priority.priority === "high").length;
+  const altas = priorities
+    .filter((priority) => priority.priority === "high")
+    .reduce((sum, priority) => sum + Math.max(1, priority.targetCount || 0), 0);
   const decididos = Math.max(values.length, 1);
 
   if (salidas >= Math.max(5, players.length * 0.25)) return salidas >= 8 ? "Revolución" : "Reconstrucción";
@@ -72,7 +75,7 @@ export function copyableSummary(groups: SummaryGroups, priorities: MarketPriorit
     `Prioridades: ${
       priorities
         .filter((priority) => priority.priority !== "none")
-        .map((priority) => `${priority.positionLabel} (${priority.priority}${priority.profileTag ? `, ${priority.profileTag}` : ""})`)
+        .map((priority) => `${priority.positionLabel} (${priorityShortLabels[priority.priority]}${priority.targetCount ? `, ${priority.targetCount}` : ""})`)
         .join("; ") || "Sin prioridades"
     }`
   );

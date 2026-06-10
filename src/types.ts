@@ -67,6 +67,7 @@ export type MarketPriority = {
   positionId: string;
   positionLabel: string;
   priority: MarketPriorityLevel;
+  targetCount: number;
   profileTag?: string;
 };
 
