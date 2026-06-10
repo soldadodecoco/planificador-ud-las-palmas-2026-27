@@ -323,6 +323,37 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
   );
 }
 
+function PositionLegend() {
+  const items = [
+    { label: "Duda", color: "#f97316" },
+    { label: "Pretemporada", color: "#38bdf8" },
+    { label: "Escuchar ofertas", color: "#ef4444" }
+  ];
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", width: "100%", marginTop: 20 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 24,
+          alignItems: "center",
+          padding: "10px 22px",
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.12)",
+          border: "1px solid rgba(255,255,255,0.18)"
+        }}
+      >
+        {items.map((item) => (
+          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", width: 14, height: 14, borderRadius: 999, background: item.color }} />
+            <div style={{ display: "flex", fontSize: 20, fontWeight: 900, color: item.color }}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CoachPill({ entrenador, status }: { entrenador: ImagePlayer; status: string }) {
   return (
     <div style={{ display: "flex", width: "100%", justifyContent: "center", marginBottom: 20 }}>
@@ -418,7 +449,10 @@ export function ShareImageTemplate({ groups, priorities, background, logo, varia
         {entrenador && <CoachPill entrenador={entrenador} status={entrenadorStatus} />}
 
         {variant === "positions" ? (
-          <PositionBlocks groups={filteredGroups} />
+          <>
+            <PositionLegend />
+            <PositionBlocks groups={filteredGroups} />
+          </>
         ) : (
           <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 40 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 970 }}>
