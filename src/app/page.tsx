@@ -30,6 +30,7 @@ export default function Home() {
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [priorities, setPriorities] = useState<MarketPriority[]>(defaultMarketPriorities);
   const [hydrated, setHydrated] = useState(false);
+  const [canteraSearch, setCanteraSearch] = useState("");
 
   useEffect(() => {
     const defaults = defaultMarketPriorities();
@@ -91,6 +92,16 @@ export default function Home() {
     setActiveSection("inicio");
   }
 
+  function scrollToCanteraPlayer(name: string) {
+    const query = name.trim().toLowerCase();
+    if (!query) return;
+
+    const player = currentPlayers.find((currentPlayer) => currentPlayer.jugador.toLowerCase().includes(query));
+    if (!player) return;
+
+    document.getElementById(`player-${player.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   return (
     <main>
       {activeSection !== "inicio" && <SectionNavigator activeSection={activeSection} />}
@@ -129,9 +140,40 @@ export default function Home() {
                 <>
                   <h2 className="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">{sectionTitles[activeSection]}</h2>
                   {activeSection === "cantera" && (
+                    <>
                     <p className="mt-2 max-w-2xl text-sm font-bold text-slate-600">
                       Puedes escoger únicamente a quienes llevarías de pretemporada o subirías directamente.
                     </p>
+                    <form
+                      className="mt-4 max-w-md"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        scrollToCanteraPlayer(canteraSearch);
+                      }}
+                    >
+                      <label className="sr-only" htmlFor="cantera-search">
+                        Buscar jugador
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          id="cantera-search"
+                          list="cantera-players"
+                          value={canteraSearch}
+                          onChange={(event) => setCanteraSearch(event.target.value)}
+                          placeholder="Buscar jugador"
+                          className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 outline-none focus:border-[#0057b8]"
+                        />
+                        <button type="submit" className="cursor-pointer rounded-md bg-[#07182f] px-4 py-2 text-sm font-black text-white">
+                          Ir
+                        </button>
+                      </div>
+                      <datalist id="cantera-players">
+                        {currentPlayers.map((player) => (
+                          <option key={player.id} value={player.jugador} />
+                        ))}
+                      </datalist>
+                    </form>
+                    </>
                   )}
                 </>
               )}

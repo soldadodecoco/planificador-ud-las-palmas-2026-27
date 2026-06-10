@@ -82,6 +82,7 @@ export function PlayerCard({ player, decision, decisionTypeOverride, onDecision,
 
   return (
     <article
+      id={`player-${player.id}`}
       className="rounded-lg border border-slate-200 bg-white shadow-sm transition"
     >
       <div className="grid grid-cols-[92px_1fr] gap-3 p-3 sm:grid-cols-[112px_1fr]">
