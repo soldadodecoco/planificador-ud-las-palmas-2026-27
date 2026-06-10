@@ -34,6 +34,8 @@ const salidaValues = new Set([
   "dejar_marchar"
 ]);
 const pretemporadaValues = new Set(["pretemporada", "renovar_y_pretemporada"]);
+const doubtValues = new Set(["duda"]);
+const offerValues = new Set(["escuchar_ofertas"]);
 
 function initials(name: string) {
   return name
@@ -48,12 +50,19 @@ function initials(name: string) {
 function PlayerPill({
   player,
   muted = false,
-  preseason = false
+  preseason = false,
+  doubt = false,
+  offer = false
 }: {
   player: ImagePlayer;
   muted?: boolean;
   preseason?: boolean;
+  doubt?: boolean;
+  offer?: boolean;
 }) {
+  const accentColor = preseason ? "#38bdf8" : doubt ? "#f97316" : offer ? "#ef4444" : "#07182f";
+  const positionColor = preseason ? "#38bdf8" : doubt ? "#f97316" : offer ? "#ef4444" : "#0057b8";
+
   return (
     <div
       style={{
@@ -116,7 +125,7 @@ function PlayerPill({
             fontSize: 23,
             lineHeight: 1.05,
             fontWeight: 900,
-            color: preseason ? "#38bdf8" : "#07182f",
+            color: accentColor,
             textDecoration: muted ? "line-through" : "none"
           }}
         >
@@ -129,7 +138,7 @@ function PlayerPill({
             fontSize: 15,
             lineHeight: 1,
             fontWeight: 700,
-            color: preseason ? "#38bdf8" : "#0057b8"
+            color: positionColor
           }}
         >
           {player.posicion}
@@ -302,6 +311,8 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
                   player={player}
                   muted={salidaValues.has(player.imageStatus || "")}
                   preseason={pretemporadaValues.has(player.imageStatus || "")}
+                  doubt={doubtValues.has(player.imageStatus || "")}
+                  offer={offerValues.has(player.imageStatus || "")}
                 />
               ))}
             </div>
