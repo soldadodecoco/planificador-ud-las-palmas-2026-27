@@ -10,6 +10,8 @@ import satori from "satori";
 
 export const runtime = "nodejs";
 
+const EXPORT_WIDTH = 3240;
+
 type Body = {
   decisions: Record<string, Decision>;
   priorities: MarketPriority[];
@@ -128,7 +130,7 @@ export async function POST(request: Request) {
   const png = new Resvg(svg, {
     fitTo: {
       mode: "width",
-      value: 2160
+      value: EXPORT_WIDTH
     }
   }).render().asPng();
 
