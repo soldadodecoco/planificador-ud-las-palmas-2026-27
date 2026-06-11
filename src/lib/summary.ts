@@ -2,11 +2,11 @@ import { Decision, MarketPriority, Player, SummaryGroups } from "@/types";
 import { priorityShortLabels } from "@/lib/market";
 
 const summaryMap: Record<keyof SummaryGroups, string[]> = {
-  renovaciones: ["renovar", "intentar_renovar", "renovar_y_pretemporada", "renovar_y_subir", "renovar_y_filial"],
+  renovaciones: ["renovar", "intentar_renovar", "renovar_y_pretemporada", "renovar_y_subir"],
   salidas: ["dejar_salir", "asumir_salida", "asumir_salida_cedido", "salida", "vender", "buscar_salida", "dejar_marchar"],
-  cesiones: ["pedir_otra_cesion", "ceder_otra_vez", "ceder"],
+  cesiones: ["pedir_otra_cesion", "ceder_otra_vez"],
   siguen: ["mantener", "recuperar"],
-  cantera: ["subir", "pretemporada", "seguir_filial", "renovar_y_pretemporada", "renovar_y_subir", "renovar_y_filial"],
+  cantera: ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"],
   dudas: ["duda"],
   compras: ["intentar_compra"],
   escucharOfertas: ["escuchar_ofertas"]
@@ -21,6 +21,8 @@ export function generateSummary(players: Player[], decisions: Record<string, Dec
   players.forEach((player) => {
     const value = decisions[player.id]?.decisionValue;
     if (!value) return;
+    const isAcademyDecision = player.tipo_decision === "filial" || player.tipo_decision === "fin_contrato_filial";
+    if (isAcademyDecision && !["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"].includes(value)) return;
 
     Object.entries(summaryMap).forEach(([group, values]) => {
       if (values.includes(value)) {
@@ -43,7 +45,7 @@ export function calculatePlanningLabel(
   ).length;
   const siguen = values.filter((value) => ["mantener", "recuperar"].includes(value)).length;
   const cantera = values.filter((value) =>
-    ["subir", "pretemporada", "seguir_filial", "renovar_y_pretemporada", "renovar_y_subir", "renovar_y_filial"].includes(value)
+    ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"].includes(value)
   ).length;
   const altas = priorities
     .filter((priority) => priority.priority === "high")

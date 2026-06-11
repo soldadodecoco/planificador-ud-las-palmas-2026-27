@@ -42,17 +42,11 @@ export const decisionButtons: Record<DecisionType, DecisionButton[]> = {
   ],
   filial: [
     { value: "subir", label: "Subir" },
-    { value: "pretemporada", label: "Pretemporada" },
-    { value: "seguir_filial", label: "Filial" },
-    { value: "ceder", label: "Ceder" },
-    { value: "duda", label: "Duda" }
+    { value: "pretemporada", label: "Pretemporada" }
   ],
   fin_contrato_filial: [
     { value: "renovar_y_pretemporada", label: "Renovar y pretemporada" },
-    { value: "renovar_y_subir", label: "Renovar y subir" },
-    { value: "renovar_y_filial", label: "Renovar y filial" },
-    { value: "dejar_salir", label: "Dejar salir" },
-    { value: "duda", label: "Duda" }
+    { value: "renovar_y_subir", label: "Renovar y subir" }
   ]
 };
 
