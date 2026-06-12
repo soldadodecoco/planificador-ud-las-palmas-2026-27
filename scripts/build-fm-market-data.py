@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -106,7 +107,11 @@ def face_id_from_db_id(player_id: str) -> str:
         return ""
     high = numeric_id >> 32
     low = numeric_id & 0xFFFFFFFF
-    return str(high) if high == low else ""
+    if high == low:
+        return str(high)
+    if high == 0:
+        return str(low)
+    return ""
 
 
 def load_lookup(xml_path: Path):
@@ -240,6 +245,21 @@ def main():
         face_id = face_id_from_db_id(player["id"])
         photo_file = FACES_DIR / f"{face_id}.png" if face_id else None
 
+        photo_id = f"{face_id}.png" if photo_file and photo_file.exists() else ""
+        photo_url = ""
+        rating = player.get("internalRating") or 0
+        
+        if photo_id:
+            if 100 <= rating <= 200:
+                target_faces_dir = OUT_DIR.parent / "faces"
+                target_faces_dir.mkdir(parents=True, exist_ok=True)
+                target_path = target_faces_dir / photo_id
+                if not target_path.exists():
+                    shutil.copy(photo_file, target_path)
+                photo_url = f"/faces/{face_id}.png"
+            else:
+                photo_url = f"/api/fm-face/{face_id}"
+
         rows.append(
             {
                 "id": player["id"],
@@ -254,8 +274,8 @@ def main():
                 "nationId": nation_id or "",
                 "nation": nation_name,
                 "contractEnd": player.get("contractEnd", ""),
-                "photoId": f"{face_id}.png" if photo_file and photo_file.exists() else "",
-                "photo": f"/api/fm-face/{face_id}" if photo_file and photo_file.exists() else "",
+                "photoId": photo_id,
+                "photo": photo_url,
                 "_sortRating": player.get("internalRating"),
             }
         )
