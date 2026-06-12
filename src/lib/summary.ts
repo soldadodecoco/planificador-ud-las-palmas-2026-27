@@ -1,5 +1,4 @@
 import { Decision, MarketPriority, Player, SummaryGroups } from "@/types";
-import { priorityShortLabels } from "@/lib/market";
 
 const summaryMap: Record<keyof SummaryGroups, string[]> = {
   renovaciones: ["renovar", "intentar_renovar", "renovar_y_pretemporada", "renovar_y_subir"],
@@ -47,17 +46,15 @@ export function calculatePlanningLabel(
   const cantera = values.filter((value) =>
     ["subir", "pretemporada", "renovar_y_pretemporada", "renovar_y_subir"].includes(value)
   ).length;
-  const altas = priorities
-    .filter((priority) => priority.priority === "high")
-    .reduce((sum, priority) => sum + Math.max(1, priority.targetCount || 0), 0);
+  const fichajes = priorities.reduce((sum, priority) => sum + (priority.targetCount || 0), 0);
   const decididos = Math.max(values.length, 1);
 
   if (salidas >= Math.max(5, players.length * 0.25)) return salidas >= 8 ? "Revolución" : "Reconstrucción";
   if (cantera >= 4) return "Apuesta por cantera";
-  if (altas >= 4) return "Mercado agresivo";
+  if (fichajes >= 5) return "Mercado agresivo";
   if (siguen / decididos > 0.55) return "Plan continuista";
-  if (salidas <= 2 && altas <= 1) return "Plan prudente";
-  if (altas >= 2 && salidas >= 3) return "Plan ambicioso";
+  if (salidas <= 2 && fichajes <= 1) return "Plan prudente";
+  if (fichajes >= 3 && salidas >= 3) return "Plan ambicioso";
   return "Refuerzo quirúrgico";
 }
 
@@ -74,11 +71,16 @@ export function copyableSummary(groups: SummaryGroups, priorities: MarketPriorit
   lines.push(`Escuchar ofertas: ${names(groups.escucharOfertas)}`);
   lines.push(`Dudas: ${names(groups.dudas)}`);
   lines.push(
-    `Prioridades: ${
+    `Mercado: ${
       priorities
-        .filter((priority) => priority.priority !== "none")
-        .map((priority) => `${priority.positionLabel} (${priorityShortLabels[priority.priority]}${priority.targetCount ? `, ${priority.targetCount}` : ""})`)
-        .join("; ") || "Sin prioridades"
+        .filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0)
+        .map((priority) => {
+          const selected = priority.selectedPlayers || [];
+          const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
+          const names = [...selected.map((player) => player.displayName), ...Array.from({ length: slots }, () => "Refuerzo")];
+          return `${priority.positionLabel}: ${names.join(", ")}`;
+        })
+        .join("; ") || "Sin refuerzos"
     }`
   );
 

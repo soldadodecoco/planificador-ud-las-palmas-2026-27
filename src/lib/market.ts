@@ -32,6 +32,7 @@ export function defaultMarketPriorities(): MarketPriority[] {
     positionLabel: position.label,
     priority: "none",
     targetCount: 0,
-    profileTag: undefined
+    profileTag: undefined,
+    selectedPlayers: []
   }));
 }

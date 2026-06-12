@@ -1,6 +1,5 @@
 "use client";
 
-import { priorityShortLabels } from "@/lib/market";
 import { calculateRosterCounts } from "@/lib/rosterCounts";
 import { generateSummary } from "@/lib/summary";
 import { fieldPositionGroups, lineForPlayer, sortByFieldPosition } from "@/lib/fieldPositions";
@@ -31,6 +30,32 @@ const salidaValues = new Set(["dejar_salir", "asumir_salida", "asumir_salida_ced
 const preseasonValues = new Set(["pretemporada", "renovar_y_pretemporada"]);
 const orangeValues = new Set(["duda", "intentar_renovar"]);
 const redValues = new Set(["escuchar_ofertas"]);
+
+function marketNeedNames(priority: MarketPriority) {
+  const selected = priority.selectedPlayers || [];
+  const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
+  return [...selected.map((player) => player.displayName), ...Array.from({ length: slots }, () => "Refuerzo")];
+}
+
+function marketNeedsForPosition(priorities: MarketPriority[], position: string) {
+  const map: Record<string, string[]> = {
+    Portero: ["porteria"],
+    Defensa: ["lateral-derecho", "central", "lateral-izquierdo"],
+    Centrocampista: ["mediocentro", "interior"],
+    Atacante: ["extremo-derecho", "extremo-izquierdo", "delantero"]
+  };
+  const ids = new Set(map[position] || []);
+  return priorities
+    .filter((priority) => ids.has(priority.positionId))
+    .flatMap((priority) => {
+      const selected = priority.selectedPlayers || [];
+      const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
+      return [
+        ...selected.map((player) => ({ name: player.displayName, detail: priority.positionLabel })),
+        ...Array.from({ length: slots }, () => ({ name: "Refuerzo", detail: priority.positionLabel }))
+      ];
+    });
+}
 
 function decisionTextColor(decision?: Decision) {
   if (!decision) return "text-slate-900";
@@ -92,18 +117,38 @@ function PlayerLine({ player, decision, strike = false }: { player: Player; deci
   );
 }
 
+function MarketLine({ name, detail }: { name: string; detail: string }) {
+  return (
+    <motion.div
+      layout
+      initial={false}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 520, damping: 42, mass: 0.7 }}
+      className="flex min-w-0 items-center gap-2 rounded bg-emerald-50 p-1.5"
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-emerald-100 text-sm font-black text-emerald-700">+</div>
+      <div className="min-w-0">
+        <p className="truncate text-xs font-black text-emerald-600">{name}</p>
+        <p className="truncate text-[10px] font-bold leading-tight text-slate-500">{detail}</p>
+      </div>
+    </motion.div>
+  );
+}
+
 export function Summary({ players, decisions, priorities, onEdit }: Props) {
   const [view, setView] = useState<"categories" | "positions">("categories");
   const [hideOutgoing, setHideOutgoing] = useState(false);
   const groups = useMemo(() => buildSummaryGroups(players, decisions), [players, decisions]);
   const decidedPlayers = useMemo(() => players.filter((player) => decisions[player.id]), [players, decisions]);
-  const activePriorities = priorities.filter((priority) => priority.priority !== "none");
+  const activePriorities = priorities.filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0);
   const rosterCounts = useMemo(() => calculateRosterCounts(decisions, priorities), [decisions, priorities]);
 
   const positionGroups = useMemo(
     () =>
       positionOrder.map((position) => ({
         position,
+        marketNeeds: marketNeedsForPosition(priorities, position),
         players: sortByFieldPosition(
           decidedPlayers.filter((player) => {
             const decision = decisions[player.id];
@@ -112,7 +157,7 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
           })
         )
       })),
-    [decidedPlayers, decisions, hideOutgoing]
+    [decidedPlayers, decisions, hideOutgoing, priorities]
   );
 
   return (
@@ -179,7 +224,7 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
           </motion.div>
         ) : (
           <motion.div layout className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {positionGroups.filter((group) => group.players.length > 0).map((group) => (
+            {positionGroups.filter((group) => group.players.length > 0 || group.marketNeeds.length > 0).map((group) => (
               <motion.section
                 layout
                 key={group.position}
@@ -189,7 +234,9 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-base font-black text-slate-950">{group.position}</h3>
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-700">{group.players.length}</span>
+                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-black text-slate-700">
+                    {group.players.length + group.marketNeeds.length}
+                  </span>
                 </div>
                 <div className="mt-2 space-y-2">
                   {fieldPositionGroups(group.players, group.position).map((fieldGroup) => (
@@ -212,6 +259,16 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
                       </div>
                     </div>
                   ))}
+                  {group.marketNeeds.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-emerald-500">Refuerzos</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {group.marketNeeds.map((need, index) => (
+                          <MarketLine key={`${need.detail}-${need.name}-${index}`} name={need.name} detail={need.detail} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.section>
             ))}
@@ -229,10 +286,12 @@ export function Summary({ players, decisions, priorities, onEdit }: Props) {
         <div className="mt-3 flex flex-wrap gap-2">
           {activePriorities.length ? (
             activePriorities.map((priority) => (
-              <span key={priority.positionId} className="rounded bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">
-                {priority.positionLabel}: {priorityShortLabels[priority.priority]}
-                {priority.targetCount > 0 ? ` · ${priority.targetCount}` : ""}
-              </span>
+              <div key={priority.positionId} className="rounded bg-slate-100 px-3 py-2 text-sm font-bold text-slate-800">
+                <p>
+                  {priority.positionLabel}: {priority.targetCount || priority.selectedPlayers?.length || 0}
+                </p>
+                <p className="mt-1 text-xs font-black text-emerald-600">{marketNeedNames(priority).join(", ")}</p>
+              </div>
             ))
           ) : (
             <p className="text-sm text-slate-700">Sin prioridades marcadas.</p>

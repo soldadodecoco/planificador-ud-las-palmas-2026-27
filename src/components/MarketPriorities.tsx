@@ -1,9 +1,8 @@
 "use client";
 
-import { marketPositions, priorityShortLabels } from "@/lib/market";
-import { allPlayers } from "@/lib/players";
+import { marketPositions } from "@/lib/market";
 import { calculateRosterCounts } from "@/lib/rosterCounts";
-import { Decision, MarketPriority, MarketPriorityLevel } from "@/types";
+import { Decision, MarketPlayer, MarketPriority } from "@/types";
 import { useMemo, useState } from "react";
 
 type Props = {
@@ -12,169 +11,389 @@ type Props = {
   onChange: (priorities: MarketPriority[]) => void;
 };
 
-const levels: MarketPriorityLevel[] = ["none", "low", "medium", "high"];
+type MarketSearchRow = [string, string, string, string, number | null, MarketPlayer["position"], string, string, string];
 
-const positionGroups: Record<string, { label: string; playerPosition: string }> = {
-  porteria: { label: "porteros", playerPosition: "Portero" },
-  "lateral-derecho": { label: "defensas", playerPosition: "Defensa" },
-  central: { label: "defensas", playerPosition: "Defensa" },
-  "lateral-izquierdo": { label: "defensas", playerPosition: "Defensa" },
-  mediocentro: { label: "centrocampistas", playerPosition: "Centrocampista" },
-  interior: { label: "centrocampistas", playerPosition: "Centrocampista" },
-  "extremo-derecho": { label: "atacantes", playerPosition: "Atacante" },
-  "extremo-izquierdo": { label: "atacantes", playerPosition: "Atacante" },
-  delantero: { label: "atacantes", playerPosition: "Atacante" }
-};
+function MarketPlayerAvatar({ player }: { player: MarketPlayer }) {
+  const [failed, setFailed] = useState(false);
 
-const continuityDecisions = new Set([
-  "renovar",
-  "intentar_renovar",
-  "mantener",
-  "recuperar",
-  "intentar_compra",
-  "subir",
-  "pretemporada",
-  "renovar_y_pretemporada",
-  "renovar_y_subir"
-]);
-
-function levelToIndex(level: MarketPriorityLevel) {
-  return levels.indexOf(level);
+  return (
+    <div className="h-9 w-9 shrink-0 overflow-hidden rounded bg-slate-100">
+      {player.photo && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={player.photo} alt={player.displayName} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-[#07182f] text-sm font-black text-[#ffe000]">
+          {player.displayName.slice(0, 1)}
+        </div>
+      )}
+    </div>
+  );
 }
 
-function indexToLevel(index: number): MarketPriorityLevel {
-  return levels[Math.max(0, Math.min(3, index))];
+function blankPriority(positionId: string): MarketPriority {
+  const position = marketPositions.find((item) => item.id === positionId) || marketPositions[0];
+  return {
+    positionId: position.id,
+    positionLabel: position.label,
+    priority: "low",
+    targetCount: 0,
+    selectedPlayers: []
+  };
+}
+
+function normalizeSearch(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function candidateScore(player: MarketPlayer, query: string) {
+  const normalizedQuery = normalizeSearch(query);
+  if (normalizedQuery.length < 2) return 0;
+
+  const fields = [player.displayName, player.fullName, player.commonName, player.club].filter(Boolean).map(normalizeSearch);
+  const haystack = fields.join(" ");
+  const compactHaystack = haystack.replace(/\s/g, "");
+  const compactQuery = normalizedQuery.replace(/\s/g, "");
+  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+  const haystackTokens = haystack.split(" ").filter(Boolean);
+
+  if (haystack === normalizedQuery) return 100;
+  if (haystack.startsWith(normalizedQuery)) return 90;
+  if (compactHaystack.startsWith(compactQuery)) return 86;
+  if (haystack.includes(normalizedQuery)) return 80;
+  if (compactHaystack.includes(compactQuery)) return 76;
+
+  let score = 0;
+  for (const token of queryTokens) {
+    const tokenScore = haystackTokens.some((candidate) => candidate === token)
+      ? 16
+      : haystackTokens.some((candidate) => candidate.startsWith(token) || token.startsWith(candidate))
+        ? 13
+        : compactHaystack.includes(token)
+          ? 10
+          : 0;
+
+    if (!tokenScore) return 0;
+    score += tokenScore;
+  }
+
+  return score;
+}
+
+function isLasPalmasClub(club: string) {
+  const normalized = normalizeSearch(club);
+  return normalized === "las palmas" || normalized === "las palmas atletico" || normalized === "las palmas c";
 }
 
 export function MarketPriorities({ priorities, decisions, onChange }: Props) {
-  const [openPositionId, setOpenPositionId] = useState<string | null>(null);
+  const [positionId, setPositionId] = useState(marketPositions[0].id);
+  const [query, setQuery] = useState("");
+  const [selectedCandidate, setSelectedCandidate] = useState<MarketPlayer | null>(null);
+  const [marketPlayers, setMarketPlayers] = useState<MarketPlayer[] | null>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
+  const [marketError, setMarketError] = useState("");
   const rosterCounts = useMemo(() => calculateRosterCounts(decisions, priorities), [decisions, priorities]);
 
-  function update(positionId: string, patch: Partial<MarketPriority>) {
+  const activeNeeds = priorities.filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0);
+
+  async function ensureMarketPlayers() {
+    if (marketPlayers || marketLoading) return;
+    setMarketLoading(true);
+    setMarketError("");
+    try {
+      const response = await fetch("/data/marketSearch.json");
+      if (!response.ok) throw new Error("No se pudo cargar mercado");
+      const rows = (await response.json()) as MarketSearchRow[];
+      setMarketPlayers(
+        rows.map(([id, displayName, fullName, commonName, age, position, club, contractEnd, photo]) => ({
+          id,
+          displayName,
+          fullName,
+          commonName,
+          age,
+          position,
+          club,
+          contractEnd,
+          photo
+        }))
+      );
+    } catch {
+      setMarketError("No se pudo cargar la base de mercado.");
+    } finally {
+      setMarketLoading(false);
+    }
+  }
+
+  function upsert(positionIdToUpdate: string, updater: (current: MarketPriority) => MarketPriority) {
+    const existing = priorities.find((priority) => priority.positionId === positionIdToUpdate);
+    const next = existing ? updater(existing) : updater(blankPriority(positionIdToUpdate));
+    onChange(priorities.map((priority) => (priority.positionId === positionIdToUpdate ? next : priority)));
+  }
+
+  function addNeed() {
+    upsert(positionId, (current) => {
+      const selectedPlayers = current.selectedPlayers || [];
+      const alreadySelected = selectedCandidate && selectedPlayers.some((player) => player.id === selectedCandidate.id);
+      const nextPlayers = selectedCandidate && !alreadySelected ? [...selectedPlayers, selectedCandidate] : selectedPlayers;
+      return {
+        ...current,
+        priority: "low",
+        selectedPlayers: nextPlayers,
+        targetCount: Math.max((current.targetCount || 0) + 1, nextPlayers.length)
+      };
+    });
+    setQuery("");
+    setSelectedCandidate(null);
+  }
+
+  function removeSlot(targetPositionId: string) {
+    upsert(targetPositionId, (current) => ({
+      ...current,
+      targetCount: Math.max((current.targetCount || 0) - 1, (current.selectedPlayers || []).length)
+    }));
+  }
+
+  function removePlayer(targetPositionId: string, playerId: string) {
+    upsert(targetPositionId, (current) => {
+      const selectedPlayers = (current.selectedPlayers || []).filter((player) => player.id !== playerId);
+      return {
+        ...current,
+        selectedPlayers,
+        targetCount: Math.max((current.targetCount || 0) - 1, selectedPlayers.length)
+      };
+    });
+  }
+
+  function movePlayer(sourcePositionId: string, targetPositionId: string, player: MarketPlayer) {
+    if (sourcePositionId === targetPositionId) return;
+    const target = priorities.find((priority) => priority.positionId === targetPositionId) || blankPriority(targetPositionId);
+    const targetAlreadyHasPlayer = (target.selectedPlayers || []).some((selected) => selected.id === player.id);
+
     onChange(
       priorities.map((priority) => {
-        if (priority.positionId !== positionId) return priority;
-        const next = { ...priority, ...patch };
-        if (next.priority === "none") next.targetCount = 0;
-        if ((next.targetCount || 0) > 0 && next.priority === "none") next.priority = "low";
-        return next;
+        if (priority.positionId === sourcePositionId) {
+          const selectedPlayers = (priority.selectedPlayers || []).filter((selected) => selected.id !== player.id);
+          return {
+            ...priority,
+            selectedPlayers,
+            targetCount: Math.max((priority.targetCount || 0) - 1, selectedPlayers.length)
+          };
+        }
+
+        if (priority.positionId === targetPositionId) {
+          const selectedPlayers = targetAlreadyHasPlayer ? priority.selectedPlayers || [] : [...(priority.selectedPlayers || []), player];
+          return {
+            ...priority,
+            priority: "low",
+            selectedPlayers,
+            targetCount: Math.max((priority.targetCount || 0) + (targetAlreadyHasPlayer ? 0 : 1), selectedPlayers.length)
+          };
+        }
+
+        return priority;
       })
     );
   }
 
-  function changeCount(positionId: string, current: MarketPriority, delta: number) {
-    const targetCount = Math.max(0, Math.min(4, (current.targetCount || 0) + delta));
-    update(positionId, {
-      targetCount,
-      priority: targetCount > 0 && current.priority === "none" ? "low" : current.priority
-    });
+  function moveSlot(sourcePositionId: string, targetPositionId: string) {
+    if (sourcePositionId === targetPositionId) return;
+    onChange(
+      priorities.map((priority) => {
+        if (priority.positionId === sourcePositionId) {
+          return {
+            ...priority,
+            targetCount: Math.max((priority.targetCount || 0) - 1, (priority.selectedPlayers || []).length)
+          };
+        }
+        if (priority.positionId === targetPositionId) {
+          return {
+            ...priority,
+            priority: "low",
+            targetCount: (priority.targetCount || 0) + 1
+          };
+        }
+        return priority;
+      })
+    );
   }
 
+  const results = useMemo(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2 || !marketPlayers || selectedCandidate) return [];
+    return marketPlayers
+      .filter((player) => !isLasPalmasClub(player.club))
+      .map((player, index) => ({ player, index, score: candidateScore(player, trimmed) }))
+      .filter((result) => result.score > 0)
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map((result) => result.player)
+      .slice(0, 8);
+  }, [marketPlayers, query, selectedCandidate]);
+
   return (
-    <div className="space-y-5">
-      <div className="mx-auto flex max-w-3xl flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-black text-slate-800">
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-black text-slate-800">
         <span>
           Plantilla actual: {rosterCounts.firstTeam} + {rosterCounts.signings} fichajes = {rosterCounts.estimatedSquad} jugadores
         </span>
         <span className="text-slate-500">{rosterCounts.preseason} pretemporada</span>
       </div>
 
-      <div className="grid justify-center gap-3 md:grid-cols-[repeat(2,minmax(0,390px))] xl:grid-cols-[repeat(3,minmax(0,390px))]">
-        {marketPositions.map((position) => {
-          const current =
-            priorities.find((priority) => priority.positionId === position.id) ||
-            ({ positionId: position.id, positionLabel: position.label, priority: "none", targetCount: 0 } as MarketPriority);
-          const group = positionGroups[position.id];
-          const players = allPlayers.filter((player) => {
-            const decision = decisions[player.id]?.decisionValue;
-            return player.posicion === group.playerPosition && Boolean(decision && continuityDecisions.has(decision));
-          });
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-[220px_1fr_auto]">
+          <label className="block">
+            <span className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Posición</span>
+            <select
+              value={positionId}
+              onChange={(event) => setPositionId(event.target.value)}
+              className="h-11 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm font-black text-slate-900 outline-none focus:border-[#0057b8]"
+            >
+              {marketPositions.map((position) => (
+                <option key={position.id} value={position.id}>
+                  {position.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          return (
-            <section key={position.id} className="relative rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-base font-black text-slate-950">{position.label}</h3>
-                <button
-                  type="button"
-                  onClick={() => setOpenPositionId((currentOpen) => (currentOpen === position.id ? null : position.id))}
-                  className="cursor-pointer text-[11px] font-black text-[#0057b8] hover:text-[#07182f]"
-                  aria-expanded={openPositionId === position.id}
-                >
-                  Ver {group.label}
-                </button>
+          <div className="relative">
+            <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500" htmlFor="market-candidate">
+              Candidato opcional
+            </label>
+            <input
+              id="market-candidate"
+              value={selectedCandidate ? selectedCandidate.displayName : query}
+              onFocus={ensureMarketPlayers}
+              onChange={(event) => {
+                ensureMarketPlayers();
+                setSelectedCandidate(null);
+                setQuery(event.target.value);
+              }}
+              placeholder="Buscar jugador"
+              className="h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 outline-none focus:border-[#0057b8]"
+            />
+            {marketLoading && <p className="mt-1 text-xs font-bold text-slate-500">Cargando mercado...</p>}
+            {marketError && <p className="mt-1 text-xs font-bold text-red-500">{marketError}</p>}
+            {results.length > 0 && (
+              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_18px_45px_rgba(7,24,47,0.18)]">
+                {results.map((player) => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCandidate(player);
+                      setQuery(player.displayName);
+                    }}
+                    className="flex w-full cursor-pointer items-center gap-2 border-b border-slate-100 px-2 py-2 text-left last:border-b-0 hover:bg-slate-50"
+                  >
+                    <MarketPlayerAvatar player={player} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black text-slate-900">{player.displayName}</span>
+                      <span className="block truncate text-xs font-bold text-slate-500">
+                        {[player.club, player.age ? `${player.age} años` : "", player.contractEnd ? `Contrato ${player.contractEnd}` : ""]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </span>
+                  </button>
+                ))}
               </div>
+            )}
+          </div>
 
-              <div className="mt-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-black text-slate-700">Cantidad a fichar</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => changeCount(position.id, current, -1)}
-                      className="h-8 w-8 cursor-pointer rounded-md border border-slate-200 bg-white text-lg font-black text-slate-900 hover:border-[#0057b8]"
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center text-lg font-black text-slate-950">{current.targetCount || 0}</span>
-                    <button
-                      type="button"
-                      onClick={() => changeCount(position.id, current, 1)}
-                      className="h-8 w-8 cursor-pointer rounded-md border border-slate-200 bg-white text-lg font-black text-slate-900 hover:border-[#0057b8]"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={addNeed}
+              className="h-11 w-full cursor-pointer rounded-md bg-[#07182f] px-5 text-sm font-black text-white hover:bg-[#0057b8] md:w-auto"
+            >
+              Añadir
+            </button>
+          </div>
+        </div>
+      </section>
 
-                <input
-                  type="range"
-                  min={0}
-                  max={3}
-                  step={1}
-                  value={levelToIndex(current.priority)}
-                  onChange={(event) => {
-                    const priority = indexToLevel(Number(event.target.value));
-                    update(position.id, {
-                      priority,
-                      targetCount: priority === "none" ? 0 : current.targetCount || 1
-                    });
-                  }}
-                  className="mx-auto block w-56 max-w-full cursor-pointer accent-[#0057b8]"
-                  aria-label={`Prioridad ${position.label}`}
-                />
-                <div className="mx-auto w-56 max-w-full text-right text-[10px] font-black uppercase tracking-wide text-slate-500">
-                  Prioridad: {priorityShortLabels[current.priority]}
+      <div className="grid gap-3 md:grid-cols-2">
+        {activeNeeds.length ? (
+          activeNeeds.map((need) => {
+            const selectedPlayers = need.selectedPlayers || [];
+            const reinforcementSlots = Math.max((need.targetCount || 0) - selectedPlayers.length, 0);
+            return (
+              <section key={need.positionId} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-base font-black text-slate-950">{need.positionLabel}</h3>
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-black text-emerald-700">{need.targetCount || selectedPlayers.length}</span>
                 </div>
-              </div>
-
-              {openPositionId === position.id && (
-                <div className="market-popover absolute left-4 right-4 top-[calc(100%-8px)] z-30 rounded-md border border-slate-200 bg-white p-3 shadow-[0_18px_45px_rgba(7,24,47,0.18)]">
-                  <div className="grid max-h-72 gap-2 overflow-auto">
-                    {players.length ? (
-                      players.map((player) => (
-                        <div key={player.id} className="flex items-center gap-2 rounded bg-white p-2">
-                          <div className="h-9 w-9 shrink-0 overflow-hidden rounded bg-slate-100">
-                            {player.foto_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={player.foto_url} alt={player.jugador} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-[#07182f] text-sm font-black text-[#ffe000]">
-                                {player.jugador.slice(0, 1)}
-                              </div>
-                            )}
-                          </div>
-                          <span className="min-w-0 truncate text-sm font-bold text-slate-800">{player.jugador}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded bg-white p-2 text-sm font-bold text-slate-500">Sin jugadores elegidos.</div>
-                    )}
-                  </div>
+                <div className="mt-3 grid gap-2">
+                  {selectedPlayers.map((player) => (
+                    <div key={player.id} className="flex items-center gap-2 rounded-md bg-emerald-50 p-2">
+                      <MarketPlayerAvatar player={player} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-black text-emerald-700">{player.displayName}</p>
+                        <p className="truncate text-xs font-bold text-slate-500">
+                          {[player.club, player.age ? `${player.age} años` : "", player.contractEnd ? `Contrato ${player.contractEnd}` : ""]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                      <select
+                        value={need.positionId}
+                        onChange={(event) => movePlayer(need.positionId, event.target.value, player)}
+                        className="h-8 max-w-[135px] cursor-pointer rounded-md border border-emerald-200 bg-white px-2 text-xs font-black text-emerald-700 outline-none focus:border-emerald-500"
+                        aria-label={`Cambiar posición de ${player.displayName}`}
+                      >
+                        {marketPositions.map((position) => (
+                          <option key={position.id} value={position.id}>
+                            {position.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => removePlayer(need.positionId, player.id)}
+                        className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-black text-red-600 hover:border-red-200"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                  {Array.from({ length: reinforcementSlots }).map((_, index) => (
+                    <div key={`${need.positionId}-slot-${index}`} className="flex items-center justify-between gap-2 rounded-md bg-emerald-50 p-2">
+                      <span className="text-sm font-black text-emerald-700">Refuerzo</span>
+                      <select
+                        value={need.positionId}
+                        onChange={(event) => moveSlot(need.positionId, event.target.value)}
+                        className="h-8 max-w-[150px] cursor-pointer rounded-md border border-emerald-200 bg-white px-2 text-xs font-black text-emerald-700 outline-none focus:border-emerald-500"
+                        aria-label="Cambiar posición de refuerzo"
+                      >
+                        {marketPositions.map((position) => (
+                          <option key={position.id} value={position.id}>
+                            {position.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => removeSlot(need.positionId)}
+                        className="cursor-pointer rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-black text-red-600 hover:border-red-200"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </section>
-          );
-        })}
+              </section>
+            );
+          })
+        ) : (
+          <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm font-bold text-slate-500 shadow-sm">
+            Sin refuerzos añadidos.
+          </p>
+        )}
       </div>
     </div>
   );

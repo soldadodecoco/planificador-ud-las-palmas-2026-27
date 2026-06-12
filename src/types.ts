@@ -88,6 +88,25 @@ export type MarketPriority = {
   priority: MarketPriorityLevel;
   targetCount: number;
   profileTag?: string;
+  selectedPlayers?: MarketPlayer[];
+};
+
+export type MarketPlayer = {
+  id: string;
+  displayName: string;
+  fullName: string;
+  commonName: string;
+  age?: number | null;
+  birthDate?: string;
+  position?: Position;
+  clubId?: string;
+  club: string;
+  nationId?: string;
+  nation?: string;
+  contractEnd: string;
+  photoId?: string;
+  photo: string;
+  imageSrc?: string;
 };
 
 export type SectionId =

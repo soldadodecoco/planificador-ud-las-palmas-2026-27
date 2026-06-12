@@ -16,7 +16,7 @@ export function calculateRosterCounts(decisions: Record<string, Decision>, prior
   const decisionValues = Object.values(decisions).map((decision) => decision.decisionValue);
   const firstTeam = decisionValues.filter((value) => firstTeamValues.has(value)).length;
   const preseason = decisionValues.filter((value) => preseasonValues.has(value)).length;
-  const signings = priorities.reduce((sum, priority) => sum + (priority.priority === "none" ? 0 : priority.targetCount || 0), 0);
+  const signings = priorities.reduce((sum, priority) => sum + (priority.targetCount || 0), 0);
 
   return {
     firstTeam,

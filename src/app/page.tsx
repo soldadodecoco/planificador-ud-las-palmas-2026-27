@@ -20,7 +20,7 @@ const sectionTitles: Partial<Record<SectionId, string>> = {
   plantilla: "Con contrato",
   "cedidos-fuera": "Vuelven tras cesión",
   cantera: "Las Palmas Atlético",
-  mercado: "Prioridades de mercado por posición",
+  mercado: "Mercado",
   resumen: "Resumen",
   imagen: "UD Las Palmas 2026/27"
 };
@@ -50,7 +50,7 @@ export default function Home() {
   const currentPlayers = useMemo(() => getPlayersForSection(allPlayers, activeSection), [activeSection]);
   const completedCount = Object.keys(decisions).length;
   const pendingCount = Math.max(allPlayers.length - completedCount, 0);
-  const hasPreviousPlan = hydrated && (completedCount > 0 || priorities.some((priority) => priority.priority !== "none"));
+  const hasPreviousPlan = hydrated && (completedCount > 0 || priorities.some((priority) => (priority.targetCount || 0) > 0));
   const activeIndex = sections.findIndex((section) => section.id === activeSection);
 
   function setDecision(player: Player, decisionValue: DecisionValue, decisionLabel: string) {

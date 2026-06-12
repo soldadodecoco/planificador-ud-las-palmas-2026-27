@@ -29,7 +29,8 @@ export function loadMarketPriorities(fallback: MarketPriority[]): MarketPriority
       return {
         ...fallbackPriority,
         ...storedPriority,
-        targetCount: storedPriority?.priority === "none" ? 0 : storedPriority?.targetCount || 0
+        targetCount: storedPriority?.targetCount || 0,
+        selectedPlayers: storedPriority?.selectedPlayers || []
       };
     });
   } catch {

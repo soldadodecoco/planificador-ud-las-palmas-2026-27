@@ -149,6 +149,47 @@ function PlayerPill({
   );
 }
 
+function MarketPill({ name, detail, imageSrc }: { name: string; detail?: string; imageSrc?: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        width: 300,
+        minHeight: 66,
+        padding: "8px 12px",
+        borderRadius: 18,
+        background: "rgba(220,252,231,0.95)",
+        color: "#047857"
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 50,
+          height: 50,
+          borderRadius: 14,
+          overflow: "hidden",
+          background: "#047857",
+          flexShrink: 0,
+          color: "white",
+          fontSize: 22,
+          fontWeight: 900
+        }}
+      >
+        {imageSrc ? <img src={imageSrc} width={50} height={50} style={{ objectFit: "cover" }} /> : "+"}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <div style={{ display: "flex", fontSize: 23, lineHeight: 1.05, fontWeight: 900 }}>{name}</div>
+        {detail && <div style={{ display: "flex", marginTop: 4, fontSize: 15, lineHeight: 1, fontWeight: 700, color: "#64748b" }}>{detail}</div>}
+      </div>
+    </div>
+  );
+}
+
 function Block({
   title,
   players,
@@ -227,6 +268,7 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
               key={p.positionId}
               style={{
                 display: "flex",
+                flexDirection: "column",
                 background: "rgba(255,255,255,0.94)",
                 color: "#07182f",
                 borderRadius: 14,
@@ -235,7 +277,12 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
                 fontWeight: 800
               }}
             >
-              {p.positionLabel}
+              <div style={{ display: "flex" }}>{p.positionLabel}</div>
+              {p.selectedPlayers && p.selectedPlayers.length > 0 && (
+                <div style={{ display: "flex", marginTop: 4, fontSize: 18, color: "#475569", maxWidth: 360 }}>
+                  {p.selectedPlayers.map((player) => player.displayName).join(", ")}
+                </div>
+              )}
               {p.targetCount > 0 ? ` · ${p.targetCount}` : ""}
             </div>
           ))}
@@ -258,6 +305,89 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
   );
 }
 
+function marketNames(priority: MarketPriority): { name: string; imageSrc?: string }[] {
+  const selected = priority.selectedPlayers || [];
+  const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
+  return [...selected.map((player) => ({ name: player.displayName, imageSrc: player.imageSrc })), ...Array.from({ length: slots }, () => ({ name: "Refuerzo" }))];
+}
+
+function MarketBlockSimple({ priorities }: { priorities: MarketPriority[] }) {
+  const active = priorities.filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0);
+  if (active.length === 0) return null;
+
+  return (
+    <div style={{ ...panel, width: "100%", marginTop: "auto", minHeight: "auto", padding: 35 }}>
+      <div style={{ display: "flex", fontSize: 42, lineHeight: 1, fontWeight: 900, color: "#ffe000", marginBottom: 24 }}>
+        Objetivos de mercado
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+        {active.map((priority) => (
+          <div
+            key={priority.positionId}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              background: "rgba(220,252,231,0.95)",
+              color: "#047857",
+              borderRadius: 14,
+              padding: "10px 16px",
+              fontSize: 24,
+              fontWeight: 900,
+              maxWidth: 420
+            }}
+          >
+            <div style={{ display: "flex" }}>{priority.positionLabel}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+              {marketNames(priority).map((player, index) => (
+                <div key={`${priority.positionId}-${player.name}-${index}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      background: "#047857",
+                      color: "white",
+                      fontSize: 14,
+                      fontWeight: 900
+                    }}
+                  >
+                    {player.imageSrc ? <img src={player.imageSrc} width={28} height={28} style={{ objectFit: "cover" }} /> : "+"}
+                  </div>
+                  <div style={{ display: "flex", fontSize: 18, color: "#475569" }}>{player.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function marketNeedsForPosition(priorities: MarketPriority[], position: string): { name: string; detail: string; imageSrc?: string }[] {
+  const map: Record<string, string[]> = {
+    Portero: ["porteria"],
+    Defensa: ["lateral-derecho", "central", "lateral-izquierdo"],
+    Centrocampista: ["mediocentro", "interior"],
+    Atacante: ["extremo-derecho", "extremo-izquierdo", "delantero"]
+  };
+  const ids = new Set(map[position] || []);
+  return priorities
+    .filter((priority) => ids.has(priority.positionId))
+    .flatMap((priority) => {
+      const selected = priority.selectedPlayers || [];
+      const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
+      return [
+        ...selected.map((player) => ({ name: player.displayName, detail: priority.positionLabel, imageSrc: player.imageSrc })),
+        ...Array.from({ length: slots }, () => ({ name: "Refuerzo", detail: priority.positionLabel }))
+      ];
+    });
+}
+
 function uniquePlayers(groups: ImageGroups) {
   const byId = new Map<string, ImagePlayer>();
   Object.values(groups)
@@ -268,7 +398,7 @@ function uniquePlayers(groups: ImageGroups) {
   return [...byId.values()];
 }
 
-function PositionBlocks({ groups }: { groups: ImageGroups }) {
+function PositionBlocks({ groups, priorities }: { groups: ImageGroups; priorities: MarketPriority[] }) {
   const players = uniquePlayers(groups).filter((player) => player.posicion !== "Entrenador");
   const blocks = [
     { title: "Porteros", value: "Portero" },
@@ -279,10 +409,11 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
   const visibleBlocks = blocks
     .map((block) => {
       const blockPlayers = sortByFieldPosition(players.filter((player) => lineForPlayer(player) === block.value));
-      const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length;
-      return { ...block, players: blockPlayers, stayingCount };
+      const marketNeeds = marketNeedsForPosition(priorities, block.value);
+      const stayingCount = blockPlayers.filter((player) => !salidaValues.has(player.imageStatus || "")).length + marketNeeds.length;
+      return { ...block, players: blockPlayers, marketNeeds, stayingCount };
     })
-    .filter((block) => block.players.length > 0);
+    .filter((block) => block.players.length > 0 || block.marketNeeds.length > 0);
 
   const columns = [visibleBlocks.filter((_, index) => index % 2 === 0), visibleBlocks.filter((_, index) => index % 2 === 1)];
 
@@ -327,6 +458,18 @@ function PositionBlocks({ groups }: { groups: ImageGroups }) {
             </div>
           </div>
         ))}
+        {block.marketNeeds.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", fontSize: 18, lineHeight: 1, fontWeight: 900, color: "#22c55e", textTransform: "uppercase" }}>
+              Refuerzos
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {block.marketNeeds.map((need, index) => (
+                <MarketPill key={`${need.detail}-${need.name}-${index}`} name={need.name} detail={need.detail} imageSrc={need.imageSrc} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -438,7 +581,7 @@ export function ShareImageTemplate({ groups, priorities, background, logo, varia
 
         {variant === "positions" ? (
           <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-            <PositionBlocks groups={filteredGroups} />
+            <PositionBlocks groups={filteredGroups} priorities={priorities} />
           </div>
         ) : (
           <div style={{ display: "flex", flex: 1, gap: 40, marginTop: 40 }}>
@@ -456,7 +599,7 @@ export function ShareImageTemplate({ groups, priorities, background, logo, varia
         )}
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: "auto" }}>
-          <MarketBlock priorities={priorities} />
+          {variant !== "positions" && <MarketBlockSimple priorities={priorities} />}
         </div>
       </div>
     </div>

@@ -11,6 +11,9 @@ import satori from "satori";
 export const runtime = "nodejs";
 
 const EXPORT_WIDTH = 3240;
+const facesDir =
+  process.env.FM_FACES_DIR ||
+  "C:\\Users\\jdieg\\Documents\\Sports Interactive\\Football Manager 26\\graphics\\faces\\faces";
 
 type Body = {
   decisions: Record<string, Decision>;
@@ -23,6 +26,12 @@ type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
 async function imageToDataUrl(url: string) {
   if (!url) return undefined;
   try {
+    const fmFaceMatch = url.match(/^\/api\/fm-face\/(\d+)$/);
+    if (fmFaceMatch) {
+      const buffer = await fs.readFile(path.join(facesDir, `${fmFaceMatch[1]}.png`));
+      return `data:image/png;base64,${buffer.toString("base64")}`;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3500);
     const response = await fetch(url, { signal: controller.signal });
@@ -34,6 +43,20 @@ async function imageToDataUrl(url: string) {
   } catch {
     return undefined;
   }
+}
+
+async function hydrateMarketImages(priorities: MarketPriority[]) {
+  return Promise.all(
+    priorities.map(async (priority) => ({
+      ...priority,
+      selectedPlayers: await Promise.all(
+        (priority.selectedPlayers || []).map(async (player) => ({
+          ...player,
+          imageSrc: await imageToDataUrl(player.photo)
+        }))
+      )
+    }))
+  );
 }
 
 async function hydrateImages(groups: SummaryGroups, decisions: Record<string, Decision>) {
@@ -91,6 +114,7 @@ export async function POST(request: Request) {
 
   const label = calculatePlanningLabel(allPlayers, decisions, priorities);
   const groupsWithImages = await hydrateImages(groups, decisions);
+  const prioritiesWithImages = await hydrateMarketImages(priorities);
   const fontPath = path.join(process.cwd(), "src", "assets", "fonts", "Manrope.ttf");
   const boldFontPath = path.join(process.cwd(), "src", "assets", "fonts", "Archivo.ttf");
   const stadiumPath = path.join(process.cwd(), "public", "stadium.jpg");
@@ -106,7 +130,7 @@ export async function POST(request: Request) {
   const logo = logoBuffer ? `data:image/png;base64,${logoBuffer.toString("base64")}` : undefined;
 
   const svg = await satori(
-    createElement(ShareImageTemplate, { groups: groupsWithImages, priorities, label, background, logo, variant }),
+    createElement(ShareImageTemplate, { groups: groupsWithImages, priorities: prioritiesWithImages, label, background, logo, variant }),
     {
     width: 2160,
     height: 2700,
