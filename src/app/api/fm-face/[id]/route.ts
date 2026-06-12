@@ -5,6 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 const facesDir =
   process.env.FM_FACES_DIR ||
   "C:\\Users\\jdieg\\Documents\\Sports Interactive\\Football Manager 26\\graphics\\faces\\faces";
+const publicFacesDir = join(process.cwd(), "public", "faces");
+const facesBaseUrl =
+  process.env.FM_FACES_BASE_URL ||
+  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,7 +17,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   }
 
   try {
-    const image = await readFile(join(facesDir, `${id}.png`));
+    const image = await readFile(join(publicFacesDir, `${id}.png`)).catch(() => readFile(join(facesDir, `${id}.png`)));
     return new NextResponse(image, {
       headers: {
         "content-type": "image/png",
@@ -21,6 +25,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       }
     });
   } catch {
+    if (facesBaseUrl) {
+      return NextResponse.redirect(`${facesBaseUrl.replace(/\/$/, "")}/${id}.png`, 302);
+    }
     return new NextResponse("Face not found", { status: 404 });
   }
 }

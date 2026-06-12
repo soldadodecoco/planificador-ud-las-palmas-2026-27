@@ -14,6 +14,10 @@ const EXPORT_WIDTH = 3240;
 const facesDir =
   process.env.FM_FACES_DIR ||
   "C:\\Users\\jdieg\\Documents\\Sports Interactive\\Football Manager 26\\graphics\\faces\\faces";
+const publicFacesDir = path.join(process.cwd(), "public", "faces");
+const facesBaseUrl =
+  process.env.FM_FACES_BASE_URL ||
+  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces";
 
 type Body = {
   decisions: Record<string, Decision>;
@@ -28,7 +32,16 @@ async function imageToDataUrl(url: string) {
   try {
     const fmFaceMatch = url.match(/^\/api\/fm-face\/(\d+)$/);
     if (fmFaceMatch) {
-      const buffer = await fs.readFile(path.join(facesDir, `${fmFaceMatch[1]}.png`));
+      const fileName = `${fmFaceMatch[1]}.png`;
+      const buffer = await fs
+        .readFile(path.join(publicFacesDir, fileName))
+        .catch(() => fs.readFile(path.join(facesDir, fileName)))
+        .catch(async () => {
+          if (!facesBaseUrl) throw new Error("Face not found");
+          const response = await fetch(`${facesBaseUrl.replace(/\/$/, "")}/${fileName}`);
+          if (!response.ok) throw new Error("Face not found");
+          return Buffer.from(await response.arrayBuffer());
+        });
       return `data:image/png;base64,${buffer.toString("base64")}`;
     }
 

@@ -58,6 +58,34 @@ npm run build
    - Build: `npm run build`
 4. Si actualizas el Excel, ejecuta `npm run convert-data` antes de desplegar y commitea `src/data/players.json`.
 
+## Caras de Football Manager
+
+La app puede cargar caras desde Hugging Face:
+
+```text
+https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces
+```
+
+Para preparar las imágenes que usa el buscador:
+
+```bash
+python scripts/prepare-hf-faces.py public/data/marketSearch.json "C:\Users\jdieg\Documents\Sports Interactive\Football Manager 26\graphics\faces\faces" "C:\ruta\fm26-facess\faces"
+```
+
+Después, dentro del repo/dataset de Hugging Face:
+
+```bash
+git add faces
+git commit -m "Add FM faces"
+git push
+```
+
+En Vercel puedes usar esta variable si cambias la URL:
+
+```text
+FM_FACES_BASE_URL=https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces
+```
+
 ## Funcionalidad
 
 - Flujo guiado por secciones.

@@ -22,6 +22,8 @@ PLAYER_FIELDS = {
     "1348759394": "birthDate",
     "1348691320": "contractEnd",
     "1349018995": "internalRating",
+    "1346584898": "currentAbility",
+    "1347371073": "potentialAbility",
     "1348758643": "pos0",
     "1348756325": "pos1",
     "1348760179": "pos2",
@@ -41,7 +43,9 @@ TABLE_RE = re.compile(r'<integer id="database_table_type" value="([^"]+)"')
 DB_ID_RE = re.compile(r'<large id="db_unique_id" value="([^"]+)"')
 PROP_RE = re.compile(r'<unsigned id="property" value="([^"]+)"')
 STRING_NEW_RE = re.compile(r'<string id="new_value" value="([^"]*)"')
-INTEGER_NEW_RE = re.compile(r'<integer id="new_value" value="([^"]*)"')
+INTEGER_NEW_RE = re.compile(r'<integer id="new_value" value="(-?\d+)"')
+INTEGER_OLD_RE = re.compile(r'<integer id="odvl" value="(-?\d+)"')
+BOOLEAN_NEW_RE = re.compile(r'<boolean id="new_value" value="([01])"')
 DATE_NEW_RE = re.compile(r'<date id="new_value" day="([^"]+)" month="([^"]+)" year="([^"]+)"')
 TTEA_RE = re.compile(r'<large id="Ttea" value="([^"]+)"')
 ODVL_RE = re.compile(r'<string id="odvl" value="([^"]*)"')
@@ -178,12 +182,22 @@ def load_players(xml_path: Path, club_ids: set[str], nation_ids: set[str]):
         if field:
             string_value = STRING_NEW_RE.search(block)
             integer_value = INTEGER_NEW_RE.search(block)
+            integer_old_value = INTEGER_OLD_RE.search(block)
+            boolean_value = BOOLEAN_NEW_RE.search(block)
             date_value = DATE_NEW_RE.search(block)
             odvl_value = ODVL_RE.search(block)
+
             if string_value:
                 player[field] = html_unescape(string_value.group(1))
             elif integer_value:
-                player[field] = int(integer_value.group(1))
+                val = int(integer_value.group(1))
+                if val == 0 and integer_old_value:
+                    val = int(integer_old_value.group(1))
+                player[field] = val
+            elif integer_old_value and not integer_value:
+                player[field] = int(integer_old_value.group(1))
+            elif boolean_value:
+                player[field] = bool(int(boolean_value.group(1)))
             elif date_value:
                 player[field] = parse_date(date_value.group(1), date_value.group(2), date_value.group(3))
             elif odvl_value:
@@ -247,7 +261,7 @@ def main():
 
         photo_id = f"{face_id}.png" if photo_file and photo_file.exists() else ""
         photo_url = ""
-        rating = player.get("internalRating") or 0
+        rating = player.get("internalRating") or player.get("currentAbility") or player.get("potentialAbility") or 0
         
         if photo_id:
             if 100 <= rating <= 200:
@@ -255,6 +269,7 @@ def main():
                 target_faces_dir.mkdir(parents=True, exist_ok=True)
                 target_path = target_faces_dir / photo_id
                 if not target_path.exists():
+                    import shutil
                     shutil.copy(photo_file, target_path)
                 photo_url = f"/faces/{face_id}.png"
             else:
