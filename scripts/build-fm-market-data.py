@@ -2,6 +2,7 @@ import json
 import re
 import shutil
 import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -65,6 +66,25 @@ def html_unescape(value: str) -> str:
         except UnicodeError:
             return cleaned
     return cleaned
+
+
+def normalize_search(value: str) -> str:
+    decomposed = unicodedata.normalize("NFD", value or "")
+    ascii_value = "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+    cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", ascii_value).lower()
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def is_las_palmas_club(value: str) -> bool:
+    normalized = normalize_search(value)
+    return normalized in {
+        "las palmas",
+        "las palmas atletico",
+        "las palmas c",
+        "u d las palmas",
+        "u d las palmas atletico",
+        "u d las palmas c",
+    }
 
 
 def iter_change_blocks(path: Path):
@@ -304,20 +324,26 @@ def main():
     for row in rows:
         row.pop("_sortRating", None)
 
-    search_rows = [
-        [
-            row["id"],
-            row["displayName"],
-            row["fullName"],
-            row["commonName"],
-            row["age"],
-            row["position"],
-            row["club"],
-            row["contractEnd"],
-            row["photo"],
-        ]
-        for row in rows
-    ]
+    search_rows = []
+    for row in rows:
+        if is_las_palmas_club(row["club"]):
+            continue
+        search_text = normalize_search(" ".join([row["displayName"], row["fullName"], row["commonName"], row["club"]]))
+        search_rows.append(
+            [
+                row["id"],
+                row["displayName"],
+                row["fullName"],
+                row["commonName"],
+                row["age"],
+                row["position"],
+                row["club"],
+                row["contractEnd"],
+                row["photo"],
+                search_text,
+                search_text.replace(" ", ""),
+            ]
+        )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "marketPlayers.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

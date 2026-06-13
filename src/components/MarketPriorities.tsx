@@ -3,7 +3,7 @@
 import { marketPositions } from "@/lib/market";
 import { calculateRosterCounts } from "@/lib/rosterCounts";
 import { Decision, MarketPlayer, MarketPriority } from "@/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Props = {
   priorities: MarketPriority[];
@@ -11,7 +11,25 @@ type Props = {
   onChange: (priorities: MarketPriority[]) => void;
 };
 
-type MarketSearchRow = [string, string, string, string, number | null, MarketPlayer["position"], string, string, string];
+type MarketSearchRow = [
+  string,
+  string,
+  string,
+  string,
+  number | null,
+  MarketPlayer["position"],
+  string,
+  string,
+  string,
+  string,
+  string
+];
+
+type IndexedMarketPlayer = MarketPlayer & {
+  searchText: string;
+  compactSearchText: string;
+  searchTokens: string[];
+};
 
 function MarketPlayerAvatar({ player }: { player: MarketPlayer }) {
   const [failed, setFailed] = useState(false);
@@ -51,16 +69,12 @@ function normalizeSearch(value: string) {
     .trim();
 }
 
-function candidateScore(player: MarketPlayer, query: string) {
-  const normalizedQuery = normalizeSearch(query);
+function candidateScore(player: IndexedMarketPlayer, normalizedQuery: string, compactQuery: string, queryTokens: string[]) {
   if (normalizedQuery.length < 2) return 0;
 
-  const fields = [player.displayName, player.fullName, player.commonName, player.club].filter(Boolean).map(normalizeSearch);
-  const haystack = fields.join(" ");
-  const compactHaystack = haystack.replace(/\s/g, "");
-  const compactQuery = normalizedQuery.replace(/\s/g, "");
-  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
-  const haystackTokens = haystack.split(" ").filter(Boolean);
+  const haystack = player.searchText;
+  const compactHaystack = player.compactSearchText;
+  const haystackTokens = player.searchTokens;
 
   if (haystack === normalizedQuery) return 100;
   if (haystack.startsWith(normalizedQuery)) return 90;
@@ -87,16 +101,24 @@ function candidateScore(player: MarketPlayer, query: string) {
 
 function isLasPalmasClub(club: string) {
   const normalized = normalizeSearch(club);
-  return normalized === "las palmas" || normalized === "las palmas atletico" || normalized === "las palmas c";
+  return (
+    normalized === "las palmas" ||
+    normalized === "las palmas atletico" ||
+    normalized === "las palmas c" ||
+    normalized === "u d las palmas" ||
+    normalized === "u d las palmas atletico" ||
+    normalized === "u d las palmas c"
+  );
 }
 
 export function MarketPriorities({ priorities, decisions, onChange }: Props) {
   const [positionId, setPositionId] = useState(marketPositions[0].id);
   const [query, setQuery] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<MarketPlayer | null>(null);
-  const [marketPlayers, setMarketPlayers] = useState<MarketPlayer[] | null>(null);
+  const [marketPlayers, setMarketPlayers] = useState<IndexedMarketPlayer[] | null>(null);
   const [marketLoading, setMarketLoading] = useState(false);
   const [marketError, setMarketError] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const rosterCounts = useMemo(() => calculateRosterCounts(decisions, priorities), [decisions, priorities]);
 
   const activeNeeds = priorities.filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0);
@@ -110,17 +132,24 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
       if (!response.ok) throw new Error("No se pudo cargar mercado");
       const rows = (await response.json()) as MarketSearchRow[];
       setMarketPlayers(
-        rows.map(([id, displayName, fullName, commonName, age, position, club, contractEnd, photo]) => ({
-          id,
-          displayName,
-          fullName,
-          commonName,
-          age,
-          position,
-          club,
-          contractEnd,
-          photo
-        }))
+        rows
+          .map(([id, displayName, fullName, commonName, age, position, club, contractEnd, photo, searchText, compactSearchText]) => ({
+            id,
+            displayName,
+            fullName,
+            commonName,
+            age,
+            position,
+            club,
+            contractEnd,
+            photo,
+            searchText: searchText || normalizeSearch([displayName, fullName, commonName, club].filter(Boolean).join(" ")),
+            compactSearchText: compactSearchText || "",
+            searchTokens: (searchText || normalizeSearch([displayName, fullName, commonName, club].filter(Boolean).join(" ")))
+              .split(" ")
+              .filter(Boolean)
+          }))
+          .filter((player) => !isLasPalmasClub(player.club))
       );
     } catch {
       setMarketError("No se pudo cargar la base de mercado.");
@@ -128,6 +157,11 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
       setMarketLoading(false);
     }
   }
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedQuery(query), 150);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
   function upsert(positionIdToUpdate: string, updater: (current: MarketPriority) => MarketPriority) {
     const existing = priorities.find((priority) => priority.positionId === positionIdToUpdate);
@@ -223,16 +257,27 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
   }
 
   const results = useMemo(() => {
-    const trimmed = query.trim();
+    const trimmed = debouncedQuery.trim();
     if (trimmed.length < 2 || !marketPlayers || selectedCandidate) return [];
-    return marketPlayers
-      .filter((player) => !isLasPalmasClub(player.club))
-      .map((player, index) => ({ player, index, score: candidateScore(player, trimmed) }))
-      .filter((result) => result.score > 0)
-      .sort((a, b) => b.score - a.score || a.index - b.index)
-      .map((result) => result.player)
+    const normalizedQuery = normalizeSearch(trimmed);
+    const compactQuery = normalizedQuery.replace(/\s/g, "");
+    const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+    const buckets: Record<number, IndexedMarketPlayer[]> = {};
+
+    for (const player of marketPlayers) {
+      const score = candidateScore(player, normalizedQuery, compactQuery, queryTokens);
+      if (!score) continue;
+      buckets[score] = buckets[score] || [];
+      buckets[score].push(player);
+      if ((buckets[100]?.length || 0) >= 8) break;
+    }
+
+    return Object.keys(buckets)
+      .map(Number)
+      .sort((a, b) => b - a)
+      .flatMap((score) => buckets[score])
       .slice(0, 8);
-  }, [marketPlayers, query, selectedCandidate]);
+  }, [marketPlayers, debouncedQuery, selectedCandidate]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
