@@ -291,9 +291,7 @@ def main():
                 if not target_path.exists():
                     import shutil
                     shutil.copy(photo_file, target_path)
-                photo_url = f"/faces/{face_id}.png"
-            else:
-                photo_url = f"/api/fm-face/{face_id}"
+            photo_url = f"/api/fm-face/{face_id}"
 
         rows.append(
             {

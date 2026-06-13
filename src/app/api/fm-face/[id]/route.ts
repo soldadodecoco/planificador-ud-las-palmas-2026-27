@@ -8,7 +8,7 @@ const facesDir =
 const publicFacesDir = join(process.cwd(), "public", "faces");
 const facesBaseUrl =
   process.env.FM_FACES_BASE_URL ||
-  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces";
+  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

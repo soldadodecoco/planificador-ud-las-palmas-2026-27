@@ -63,19 +63,19 @@ npm run build
 La app puede cargar caras desde Hugging Face:
 
 ```text
-https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces
+https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main
 ```
 
 Para preparar las imágenes que usa el buscador:
 
 ```bash
-python scripts/prepare-hf-faces.py public/data/marketSearch.json "C:\Users\jdieg\Documents\Sports Interactive\Football Manager 26\graphics\faces\faces" "C:\ruta\fm26-facess\faces"
+python scripts/prepare-hf-faces.py public/data/marketSearch.json "C:\Users\jdieg\Documents\Sports Interactive\Football Manager 26\graphics\faces\faces" "C:\ruta\fm26-facess"
 ```
 
 Después, dentro del repo/dataset de Hugging Face:
 
 ```bash
-git add faces
+git add *.png
 git commit -m "Add FM faces"
 git push
 ```
@@ -83,7 +83,7 @@ git push
 En Vercel puedes usar esta variable si cambias la URL:
 
 ```text
-FM_FACES_BASE_URL=https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces
+FM_FACES_BASE_URL=https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main
 ```
 
 ## Funcionalidad

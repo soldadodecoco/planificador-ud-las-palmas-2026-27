@@ -17,7 +17,7 @@ const facesDir =
 const publicFacesDir = path.join(process.cwd(), "public", "faces");
 const facesBaseUrl =
   process.env.FM_FACES_BASE_URL ||
-  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main/faces";
+  "https://huggingface.co/datasets/soldadodecoco/fm26-facess/resolve/main";
 
 type Body = {
   decisions: Record<string, Decision>;
