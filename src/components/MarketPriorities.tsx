@@ -40,8 +40,12 @@ const firstTeamDecisionValues = new Set([
   "recuperar",
   "intentar_compra",
   "subir",
-  "renovar_y_subir"
+  "renovar_y_subir",
+  "pretemporada",
+  "renovar_y_pretemporada"
 ]);
+
+const preseasonValues = new Set(["pretemporada", "renovar_y_pretemporada"]);
 
 function normalizeMarketPhoto(photo?: string) {
   const match = photo?.match(/^\/faces\/(\d+)\.png$/);
@@ -498,7 +502,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
 
       {plannedSquadByLine.length > 0 && (
         <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="text-base font-black text-slate-950">Plantilla actual por posición</h3>
+          <h3 className="text-base font-black text-slate-950">Plantilla 2026/27</h3>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             {plannedSquadByLine.map((line) => (
               <div key={line.value} className="rounded-md border border-slate-100 bg-slate-50 p-3">
@@ -513,12 +517,18 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
                     <div key={group.fieldPosition}>
                       <p className="mb-1 text-[11px] font-black uppercase tracking-wide text-slate-400">{group.label}</p>
                       <div className="flex flex-wrap gap-2">
-                        {group.players.map((player) => (
-                          <div key={player.id} className="flex max-w-full items-center gap-2 rounded bg-white px-2 py-1 shadow-sm">
-                            <RosterPlayerAvatar player={player} />
-                            <span className="truncate text-xs font-black text-slate-800">{player.jugador}</span>
-                          </div>
-                        ))}
+                        {group.players.map((player) => {
+                          const decision = decisions[player.id]?.decisionValue;
+                          const isPreseason = decision && preseasonValues.has(decision);
+                          return (
+                            <div key={player.id} className="flex max-w-full items-center gap-2 rounded bg-white px-2 py-1 shadow-sm">
+                              <RosterPlayerAvatar player={player} />
+                              <span className={`truncate text-xs font-black ${isPreseason ? "text-sky-500" : "text-slate-800"}`}>
+                                {player.jugador}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
