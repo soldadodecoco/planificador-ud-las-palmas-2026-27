@@ -42,10 +42,14 @@ const firstTeamDecisionValues = new Set([
   "subir",
   "renovar_y_subir",
   "pretemporada",
-  "renovar_y_pretemporada"
+  "renovar_y_pretemporada",
+  "duda",
+  "escuchar_ofertas"
 ]);
 
 const preseasonValues = new Set(["pretemporada", "renovar_y_pretemporada"]);
+const orangeValues = new Set(["duda", "intentar_renovar"]);
+const redValues = new Set(["escuchar_ofertas"]);
 
 function normalizeMarketPhoto(photo?: string) {
   const match = photo?.match(/^\/faces\/(\d+)\.png$/);
@@ -520,10 +524,18 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
                         {group.players.map((player) => {
                           const decision = decisions[player.id]?.decisionValue;
                           const isPreseason = decision && preseasonValues.has(decision);
+                          const isOrange = decision && orangeValues.has(decision);
+                          const isRed = decision && redValues.has(decision);
+                          
+                          let textColor = "text-slate-800";
+                          if (isPreseason) textColor = "text-sky-500";
+                          else if (isOrange) textColor = "text-orange-500";
+                          else if (isRed) textColor = "text-red-500";
+
                           return (
                             <div key={player.id} className="flex max-w-full items-center gap-2 rounded bg-white px-2 py-1 shadow-sm">
                               <RosterPlayerAvatar player={player} />
-                              <span className={`truncate text-xs font-black ${isPreseason ? "text-sky-500" : "text-slate-800"}`}>
+                              <span className={`truncate text-xs font-black ${textColor}`}>
                                 {player.jugador}
                               </span>
                             </div>
