@@ -12,6 +12,7 @@ CLUBS_NATIONS_XML = Path(sys.argv[2])
 FACES_DIR = Path(sys.argv[3])
 OUT_DIR = Path(sys.argv[4])
 CLUB_NAME_CHANGES_XML = Path(sys.argv[5]) if len(sys.argv) > 5 else None
+FIRST_SECOND_NAME_XML = Path(sys.argv[6]) if len(sys.argv) > 6 else None
 
 TODAY = date(2026, 6, 12)
 
@@ -241,6 +242,31 @@ def load_players(xml_path: Path, club_ids: set[str], nation_ids: set[str]):
     return players, ref_stats
 
 
+def load_name_overrides(xml_path: Path | None):
+    if not xml_path or not xml_path.exists():
+        return {}
+
+    names: dict[str, dict[str, str]] = {}
+    for block in iter_change_blocks(xml_path):
+        table = TABLE_RE.search(block)
+        db_id = DB_ID_RE.search(block)
+        prop = PROP_RE.search(block)
+        if not table or table.group(1) != "1" or not db_id or not prop:
+            continue
+
+        field = "firstName" if prop.group(1) == "1348890209" else "lastName" if prop.group(1) == "1349742177" else None
+        if not field:
+            continue
+
+        odvl_value = ODVL_RE.search(block)
+        string_value = STRING_NEW_RE.search(block)
+        value = html_unescape((odvl_value or string_value).group(1)) if (odvl_value or string_value) else ""
+        if value and value not in {"A", "B"}:
+            names.setdefault(db_id.group(1), {})[field] = value
+
+    return names
+
+
 def choose_ref(refs: dict[str, list[str]], prop_candidates: list[str], lookup: dict[str, str]):
     for prop in prop_candidates:
         for ref in refs.get(prop, []):
@@ -253,6 +279,10 @@ def main():
     clubs, nations = load_lookup(CLUBS_NATIONS_XML)
     apply_club_name_changes(clubs, CLUB_NAME_CHANGES_XML)
     players, ref_stats = load_players(PLAYER_XML, set(clubs), set(nations))
+    name_overrides = load_name_overrides(FIRST_SECOND_NAME_XML)
+    for player_id, names in name_overrides.items():
+        if player_id in players:
+            players[player_id].update(names)
 
     club_props = [
         prop for prop, stat in sorted(ref_stats.items(), key=lambda item: -item[1]["club"]) if stat["club"] > 0
@@ -267,7 +297,8 @@ def main():
         last = player.get("lastName", "")
         common = player.get("commonName", "")
         full_name = player.get("fullNameFromOdlv") or " ".join(part for part in [first, last] if part).strip()
-        display_name = common or full_name
+        first_second_name = " ".join(part for part in [first, last] if part).strip()
+        display_name = first_second_name or common or full_name
         if not display_name or not player.get("birthDate"):
             continue
         birth_date = player.get("birthDate")
