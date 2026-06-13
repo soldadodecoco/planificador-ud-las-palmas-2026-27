@@ -52,12 +52,16 @@ function compactName(name: string, max = 22) {
   if (name.length <= max) return name;
   const parts = name.split(" ").filter(Boolean);
   if (parts.length >= 2) {
-    const firstLast = `${parts[0]} ${parts[parts.length - 1]}`;
-    if (firstLast.length <= max) return firstLast;
-    const initialLast = `${parts[0][0]}. ${parts[parts.length - 1]}`;
-    if (initialLast.length <= max) return initialLast;
+    const firstSurname = `${parts[0]} ${parts[1]}`;
+    if (firstSurname.length <= max) return firstSurname;
+    const initialSurname = `${parts[0][0]}. ${parts[1]}`;
+    if (initialSurname.length <= max) return initialSurname;
   }
   return `${name.slice(0, Math.max(0, max - 3)).trim()}...`;
+}
+
+function marketPlayerName(player: { commonName?: string; displayName: string; fullName?: string }) {
+  return player.commonName || player.displayName || player.fullName || "Refuerzo";
 }
 
 function PlayerPill({
@@ -321,7 +325,7 @@ function MarketBlock({ priorities }: { priorities: MarketPriority[] }) {
 function marketNames(priority: MarketPriority): { name: string; imageSrc?: string }[] {
   const selected = priority.selectedPlayers || [];
   const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
-  return [...selected.map((player) => ({ name: player.displayName, imageSrc: player.imageSrc })), ...Array.from({ length: slots }, () => ({ name: "Refuerzo" }))];
+  return [...selected.map((player) => ({ name: marketPlayerName(player), imageSrc: player.imageSrc })), ...Array.from({ length: slots }, () => ({ name: "Refuerzo" }))];
 }
 
 function MarketBlockSimple({ priorities }: { priorities: MarketPriority[] }) {
@@ -395,7 +399,7 @@ function marketNeedsForPosition(priorities: MarketPriority[], position: string):
       const selected = priority.selectedPlayers || [];
       const slots = Math.max((priority.targetCount || 0) - selected.length, 0);
       return [
-        ...selected.map((player) => ({ name: player.displayName, detail: priority.positionLabel, imageSrc: player.imageSrc })),
+        ...selected.map((player) => ({ name: marketPlayerName(player), detail: priority.positionLabel, imageSrc: player.imageSrc })),
         ...Array.from({ length: slots }, () => ({ name: "Refuerzo", detail: priority.positionLabel }))
       ];
     });

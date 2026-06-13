@@ -1,8 +1,10 @@
 "use client";
 
 import { marketPositions } from "@/lib/market";
+import { allPlayers } from "@/lib/players";
+import { fieldPositionGroups, lineForPlayer } from "@/lib/fieldPositions";
 import { calculateRosterCounts } from "@/lib/rosterCounts";
-import { Decision, MarketPlayer, MarketPriority } from "@/types";
+import { Decision, MarketPlayer, MarketPriority, Player } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 
 type Props = {
@@ -31,6 +33,16 @@ type IndexedMarketPlayer = MarketPlayer & {
   searchTokens: string[];
 };
 
+const firstTeamDecisionValues = new Set([
+  "renovar",
+  "intentar_renovar",
+  "mantener",
+  "recuperar",
+  "intentar_compra",
+  "subir",
+  "renovar_y_subir"
+]);
+
 function normalizeMarketPhoto(photo?: string) {
   const match = photo?.match(/^\/faces\/(\d+)\.png$/);
   return match ? `/api/fm-face/${match[1]}` : photo || "";
@@ -47,6 +59,23 @@ function MarketPlayerAvatar({ player }: { player: MarketPlayer }) {
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-[#07182f] text-sm font-black text-[#ffe000]">
           {player.displayName.slice(0, 1)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RosterPlayerAvatar({ player }: { player: Player }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-slate-100">
+      {player.foto_url && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={player.foto_url} alt={player.jugador} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-[#07182f] text-xs font-black text-[#ffe000]">
+          {player.jugador.slice(0, 1)}
         </div>
       )}
     </div>
@@ -125,6 +154,26 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
   const [marketError, setMarketError] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const rosterCounts = useMemo(() => calculateRosterCounts(decisions, priorities), [decisions, priorities]);
+  const plannedSquadByLine = useMemo(() => {
+    const firstTeamPlayers = allPlayers.filter((player) => {
+      if (player.posicion === "Entrenador") return false;
+      const decision = decisions[player.id]?.decisionValue;
+      return Boolean(decision && firstTeamDecisionValues.has(decision));
+    });
+    const lines = [
+      { title: "Porteros", value: "Portero" },
+      { title: "Defensas", value: "Defensa" },
+      { title: "Centrocampistas", value: "Centrocampista" },
+      { title: "Atacantes", value: "Atacante" }
+    ];
+
+    return lines
+      .map((line) => ({
+        ...line,
+        groups: fieldPositionGroups(firstTeamPlayers.filter((player) => lineForPlayer(player) === line.value), line.value)
+      }))
+      .filter((line) => line.groups.some((group) => group.players.length > 0));
+  }, [decisions]);
 
   const activeNeeds = priorities.filter((priority) => (priority.targetCount || 0) > 0 || (priority.selectedPlayers || []).length > 0);
 
@@ -446,6 +495,39 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
           </p>
         )}
       </div>
+
+      {plannedSquadByLine.length > 0 && (
+        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="text-base font-black text-slate-950">Plantilla actual por posición</h3>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {plannedSquadByLine.map((line) => (
+              <div key={line.value} className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-black text-slate-950">{line.title}</p>
+                  <span className="text-xs font-black text-slate-500">
+                    {line.groups.reduce((sum, group) => sum + group.players.length, 0)}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {line.groups.map((group) => (
+                    <div key={group.fieldPosition}>
+                      <p className="mb-1 text-[11px] font-black uppercase tracking-wide text-slate-400">{group.label}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {group.players.map((player) => (
+                          <div key={player.id} className="flex max-w-full items-center gap-2 rounded bg-white px-2 py-1 shadow-sm">
+                            <RosterPlayerAvatar player={player} />
+                            <span className="truncate text-xs font-black text-slate-800">{player.jugador}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
