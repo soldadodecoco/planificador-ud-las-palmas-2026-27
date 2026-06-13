@@ -48,6 +48,18 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function compactName(name: string, max = 22) {
+  if (name.length <= max) return name;
+  const parts = name.split(" ").filter(Boolean);
+  if (parts.length >= 2) {
+    const firstLast = `${parts[0]} ${parts[parts.length - 1]}`;
+    if (firstLast.length <= max) return firstLast;
+    const initialLast = `${parts[0][0]}. ${parts[parts.length - 1]}`;
+    if (initialLast.length <= max) return initialLast;
+  }
+  return `${name.slice(0, Math.max(0, max - 3)).trim()}...`;
+}
+
 function PlayerPill({
   player,
   muted = false,
@@ -150,6 +162,7 @@ function PlayerPill({
 }
 
 function MarketPill({ name, detail, imageSrc }: { name: string; detail?: string; imageSrc?: string }) {
+  const visibleName = compactName(name, 20);
   return (
     <div
       style={{
@@ -183,7 +196,7 @@ function MarketPill({ name, detail, imageSrc }: { name: string; detail?: string;
         {imageSrc ? <img src={imageSrc} width={50} height={50} style={{ objectFit: "cover" }} /> : "+"}
       </div>
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ display: "flex", fontSize: 23, lineHeight: 1.05, fontWeight: 900 }}>{name}</div>
+        <div style={{ display: "flex", fontSize: 21, lineHeight: 1.05, fontWeight: 900, maxWidth: 206 }}>{visibleName}</div>
         {detail && <div style={{ display: "flex", marginTop: 4, fontSize: 15, lineHeight: 1, fontWeight: 700, color: "#64748b" }}>{detail}</div>}
       </div>
     </div>
@@ -357,7 +370,7 @@ function MarketBlockSimple({ priorities }: { priorities: MarketPriority[] }) {
                   >
                     {player.imageSrc ? <img src={player.imageSrc} width={28} height={28} style={{ objectFit: "cover" }} /> : "+"}
                   </div>
-                  <div style={{ display: "flex", fontSize: 18, color: "#475569" }}>{player.name}</div>
+                  <div style={{ display: "flex", fontSize: 18, color: "#475569", maxWidth: 250 }}>{compactName(player.name, 24)}</div>
                 </div>
               ))}
             </div>

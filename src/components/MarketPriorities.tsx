@@ -31,6 +31,11 @@ type IndexedMarketPlayer = MarketPlayer & {
   searchTokens: string[];
 };
 
+function normalizeMarketPhoto(photo?: string) {
+  const match = photo?.match(/^\/faces\/(\d+)\.png$/);
+  return match ? `/api/fm-face/${match[1]}` : photo || "";
+}
+
 function MarketPlayerAvatar({ player }: { player: MarketPlayer }) {
   const [failed, setFailed] = useState(false);
 
@@ -142,7 +147,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
             position,
             club,
             contractEnd,
-            photo,
+            photo: normalizeMarketPhoto(photo),
             searchText: searchText || normalizeSearch([displayName, fullName, commonName, club].filter(Boolean).join(" ")),
             compactSearchText: compactSearchText || "",
             searchTokens: (searchText || normalizeSearch([displayName, fullName, commonName, club].filter(Boolean).join(" ")))
@@ -171,7 +176,7 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
 
   function addNeed() {
     upsert(positionId, (current) => {
-      const selectedPlayers = current.selectedPlayers || [];
+      const selectedPlayers = (current.selectedPlayers || []).map((player) => ({ ...player, photo: normalizeMarketPhoto(player.photo) }));
       const alreadySelected = selectedCandidate && selectedPlayers.some((player) => player.id === selectedCandidate.id);
       const nextPlayers = selectedCandidate && !alreadySelected ? [...selectedPlayers, selectedCandidate] : selectedPlayers;
       return {
@@ -220,7 +225,8 @@ export function MarketPriorities({ priorities, decisions, onChange }: Props) {
         }
 
         if (priority.positionId === targetPositionId) {
-          const selectedPlayers = targetAlreadyHasPlayer ? priority.selectedPlayers || [] : [...(priority.selectedPlayers || []), player];
+          const currentPlayers = (priority.selectedPlayers || []).map((selected) => ({ ...selected, photo: normalizeMarketPhoto(selected.photo) }));
+          const selectedPlayers = targetAlreadyHasPlayer ? currentPlayers : [...currentPlayers, { ...player, photo: normalizeMarketPhoto(player.photo) }];
           return {
             ...priority,
             priority: "low",

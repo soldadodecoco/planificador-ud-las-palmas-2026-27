@@ -30,7 +30,7 @@ type ImagePlayer = Player & { imageSrc?: string; imageStatus?: string };
 async function imageToDataUrl(url: string) {
   if (!url) return undefined;
   try {
-    const fmFaceMatch = url.match(/^\/api\/fm-face\/(\d+)$/);
+    const fmFaceMatch = url.match(/^\/api\/fm-face\/(\d+)$/) || url.match(/^\/faces\/(\d+)\.png$/);
     if (fmFaceMatch) {
       const fileName = `${fmFaceMatch[1]}.png`;
       const buffer = await fs
